@@ -30,8 +30,8 @@ const dimensions: CompDimension[] = [
   { label: "Önismeret", youthKey: "q22", orgKey: "q27" },
 ];
 
-function extractValues(data: YouthRow[] | OrganizerRow[], key: string): number[] {
-  return (data as Record<string, unknown>[]).map(d => d[key] as number).filter(v => !isNaN(v) && v >= 1 && v <= 5);
+function extractValues(data: readonly (YouthRow | OrganizerRow)[], key: string): number[] {
+  return data.map(d => (d as unknown as Record<string, number>)[key]).filter(v => !isNaN(v) && v >= 1 && v <= 5);
 }
 
 export function ComparisonSection({ selectedLocation }: ComparisonSectionProps) {

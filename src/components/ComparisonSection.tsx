@@ -85,7 +85,7 @@ export function ComparisonSection({ selectedLocation }: ComparisonSectionProps) 
   const sigCount = comparisonData.filter(d => d.significant).length;
 
   return (
-    <div>
+    <div data-pdf-section="comparison">
       <div className="mb-6">
         <h2 className="text-lg font-display font-bold text-primary">Összehasonlító elemzés</h2>
         <p className="text-sm text-muted-foreground">Résztvevők (N={yData.length}) vs. ELTE hallgatók (N={oData.length}) — Mann-Whitney U teszttel</p>

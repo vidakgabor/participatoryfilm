@@ -1,4 +1,5 @@
 import { Film, Users, BarChart3, GitCompare, MessageSquareText } from "lucide-react";
+import { PdfExportButton } from "./PdfExportButton";
 
 interface DashboardSidebarProps {
   activeSection: string;
@@ -64,6 +65,14 @@ export function DashboardSidebar({
             <option key={loc} value={loc}>{loc}</option>
           ))}
         </select>
+      </div>
+
+      <div className="p-5 border-t border-sidebar-border">
+        <p className="text-[10px] uppercase tracking-widest text-sidebar-muted mb-2">Export</p>
+        <PdfExportButton
+          sectionIds={["youth", "organizer", "comparison", "openended"]}
+          filename="impact-dashboard-export"
+        />
       </div>
     </aside>
   );

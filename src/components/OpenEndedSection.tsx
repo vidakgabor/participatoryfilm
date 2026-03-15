@@ -74,7 +74,7 @@ export function OpenEndedSection() {
   []);
 
   return (
-    <div>
+    <div data-pdf-section="openended">
       <div className="mb-6">
         <h2 className="text-lg font-display font-bold text-primary">Nyitott kérdések elemzése</h2>
         <p className="text-sm text-muted-foreground">Szöveges válaszok tematikus és szógyakorisági elemzése — mindkét csoport</p>

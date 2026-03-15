@@ -83,7 +83,7 @@ export function YouthSection({ selectedLocation }: YouthSectionProps) {
   }, [data]);
 
   return (
-    <div>
+    <div data-pdf-section="youth">
       <div className="mb-6">
         <h2 className="text-lg font-display font-bold text-primary">Hosszútávú hatások — Hátrányos helyzetű fiatalok</h2>
         <p className="text-sm text-muted-foreground">Részvételi filmes program utánkövetéses vizsgálat (1–3 év)</p>

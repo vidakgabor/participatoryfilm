@@ -79,7 +79,7 @@ export function OrganizerSection({ selectedLocation }: OrganizerSectionProps) {
   }, [data, n]);
 
   return (
-    <div>
+    <div data-pdf-section="organizer">
       <div className="mb-6">
         <h2 className="text-lg font-display font-bold text-primary">Hosszútávú hatások — ELTE hallgatók (szervezők)</h2>
         <p className="text-sm text-muted-foreground">Szervezői perspektíva — facilitátorok utánkövetése</p>

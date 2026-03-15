@@ -66,6 +66,14 @@ export function DashboardSidebar({
           ))}
         </select>
       </div>
+
+      <div className="p-5 border-t border-sidebar-border">
+        <p className="text-[10px] uppercase tracking-widest text-sidebar-muted mb-2">Export</p>
+        <PdfExportButton
+          sectionIds={["youth", "organizer", "comparison", "openended"]}
+          filename="impact-dashboard-export"
+        />
+      </div>
     </aside>
   );
 }

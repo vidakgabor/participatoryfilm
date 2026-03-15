@@ -1,4 +1,4 @@
-import { Film, Users, BarChart3, GitCompare } from "lucide-react";
+import { Film, Users, BarChart3, GitCompare, MessageSquareText } from "lucide-react";
 
 interface DashboardSidebarProps {
   activeSection: string;
@@ -12,6 +12,7 @@ const sections = [
   { id: "youth", label: "Hátrányos helyzetű fiatalok", icon: Users },
   { id: "organizer", label: "ELTE hallgatók", icon: Film },
   { id: "comparison", label: "Összehasonlítás", icon: GitCompare },
+  { id: "openended", label: "Nyitott kérdések", icon: MessageSquareText },
 ];
 
 export function DashboardSidebar({

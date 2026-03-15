@@ -1,4 +1,5 @@
 import { Film, Users, BarChart3, GitCompare, MessageSquareText } from "lucide-react";
+import { PdfExportButton } from "./PdfExportButton";
 
 interface DashboardSidebarProps {
   activeSection: string;

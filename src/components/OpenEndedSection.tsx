@@ -240,12 +240,12 @@ export function OpenEndedSection() {
           <h3 className="text-sm font-display font-semibold text-emerald-700 mb-3">Kiemelkedő válaszok — Szervezők</h3>
           <div className="space-y-2">
             {[
-              "„Személyes jelenlét és a közös munka egészen más megismerési lehetőség, mint a médiából értesülni"",
-              "„Rájöttem hogy mennyire másképp látják a világot, a videók elkészítésével ki tudták adni magukból az érzéseiket"",
-              "„Nem bíztam a pedagógiai készségeimben, de alaptalan volt a félelmem"",
-              "„Csoportvezető készség fejlődött, magabiztosabban állok az ilyenhez"",
-              "„Jó volt látni, hogy ők is igazából ugyanolyanok, mint amilyen én voltam ennyi idősen"",
-              "„Volt egy pont ahol megértették, hogy mi miattuk jöttünk oda"",
+              "\u201ESzem\u00E9lyes jelenl\u00E9t \u00E9s a k\u00F6z\u00F6s munka eg\u00E9szen m\u00E1s megismer\u00E9si lehet\u0151s\u00E9g, mint a m\u00E9di\u00E1b\u00F3l \u00E9rtes\u00FClni\u201D",
+              "\u201ER\u00E1j\u00F6ttem hogy mennyire m\u00E1sk\u00E9pp l\u00E1tj\u00E1k a vil\u00E1got, a vide\u00F3k elk\u00E9sz\u00EDt\u00E9s\u00E9vel ki tudt\u00E1k adni magukb\u00F3l az \u00E9rz\u00E9seiket\u201D",
+              "\u201ENem b\u00EDztam a pedag\u00F3giai k\u00E9szs\u00E9geimben, de alaptalan volt a f\u00E9lelmem\u201D",
+              "\u201ECsoportvezet\u0151 k\u00E9szs\u00E9g fejl\u0151d\u00F6tt, magabiztosabban \u00E1llok az ilyenhez\u201D",
+              "\u201EJ\u00F3 volt l\u00E1tni, hogy \u0151k is igaz\u00E1b\u00F3l ugyanolyanok, mint amilyen \u00E9n voltam ennyi id\u0151sen\u201D",
+              "\u201EVolt egy pont ahol meg\u00E9rtett\u00E9k, hogy mi miattuk j\u00F6tt\u00FCnk oda\u201D",
             ].map((q, i) => (
               <p key={i} className="text-xs text-muted-foreground italic border-l-2 border-emerald-500/30 pl-3 py-1">
                 {q}

@@ -222,12 +222,12 @@ export function OpenEndedSection() {
           <h3 className="text-sm font-display font-semibold text-primary mb-3">Kiemelkedő válaszok — Fiatalok</h3>
           <div className="space-y-2">
             {[
-              "„Magabiztosabb lettem másokkal való kommunikációban"",
-              "„Befogadóbb vagyok az idegenekkel szemben"",
-              "„Végre találtam egy hobbit amiből talán meg is tudok majd élni"",
-              "„Rájöttem hogy a filmezés nagyon szuper dolog"",
-              "„Nem félek ha idegen emberekkel találkozok"",
-              "„Nagyon nyitott személyiség vagyok és tanulságos volt megismerni az ottani emberek életfelfogását"",
+              "\u201EMagabiztosabb lettem m\u00E1sokkal val\u00F3 kommunik\u00E1ci\u00F3ban\u201D",
+              "\u201EBefogad\u00F3bb vagyok az idegenekkel szemben\u201D",
+              "\u201EV\u00E9gre tal\u00E1ltam egy hobbit amib\u0151l tal\u00E1n meg is tudok majd \u00E9lni\u201D",
+              "\u201ER\u00E1j\u00F6ttem hogy a filmez\u00E9s nagyon szuper dolog\u201D",
+              "\u201ENem f\u00E9lek ha idegen emberekkel tal\u00E1lkozok\u201D",
+              "\u201ENagyon nyitott szem\u00E9lyis\u00E9g vagyok \u00E9s tanuls\u00E1gos volt megismerni az ottani emberek \u00E9letfelfog\u00E1s\u00E1t\u201D",
             ].map((q, i) => (
               <p key={i} className="text-xs text-muted-foreground italic border-l-2 border-primary/30 pl-3 py-1">
                 {q}

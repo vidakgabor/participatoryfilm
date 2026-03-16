@@ -4,6 +4,7 @@ import { YouthSection } from "@/components/YouthSection";
 import { OrganizerSection } from "@/components/OrganizerSection";
 import { ComparisonSection } from "@/components/ComparisonSection";
 import { OpenEndedSection } from "@/components/OpenEndedSection";
+import { AcceptanceFutureSection } from "@/components/AcceptanceFutureSection";
 import { locations } from "@/data/youthData";
 import { orgLocations } from "@/data/organizerData";
 

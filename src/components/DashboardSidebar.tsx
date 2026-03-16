@@ -1,4 +1,4 @@
-import { Film, Users, BarChart3, GitCompare, MessageSquareText } from "lucide-react";
+import { Film, Users, BarChart3, GitCompare, MessageSquareText, HeartHandshake } from "lucide-react";
 import { PdfExportButton } from "./PdfExportButton";
 
 interface DashboardSidebarProps {
@@ -14,6 +14,7 @@ const sections = [
   { id: "organizer", label: "ELTE hallgatók", icon: Film },
   { id: "comparison", label: "Összehasonlítás", icon: GitCompare },
   { id: "openended", label: "Nyitott kérdések", icon: MessageSquareText },
+  { id: "acceptance-future", label: "Elfogadás & Jövőkép", icon: HeartHandshake },
 ];
 
 export function DashboardSidebar({
@@ -70,7 +71,7 @@ export function DashboardSidebar({
       <div className="p-5 border-t border-sidebar-border">
         <p className="text-[10px] uppercase tracking-widest text-sidebar-muted mb-2">Export</p>
         <PdfExportButton
-          sectionIds={["youth", "organizer", "comparison", "openended"]}
+          sectionIds={["youth", "organizer", "comparison", "openended", "acceptance-future"]}
           filename="impact-dashboard-export"
         />
       </div>

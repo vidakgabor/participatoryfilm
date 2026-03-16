@@ -4,6 +4,7 @@ import { YouthSection } from "@/components/YouthSection";
 import { OrganizerSection } from "@/components/OrganizerSection";
 import { ComparisonSection } from "@/components/ComparisonSection";
 import { OpenEndedSection } from "@/components/OpenEndedSection";
+import { AcceptanceFutureSection } from "@/components/AcceptanceFutureSection";
 import { locations } from "@/data/youthData";
 import { orgLocations } from "@/data/organizerData";
 
@@ -27,6 +28,7 @@ const Index = () => {
         {activeSection === "organizer" && <OrganizerSection selectedLocation={selectedLocation} />}
         {activeSection === "comparison" && <ComparisonSection selectedLocation={selectedLocation} />}
         {activeSection === "openended" && <OpenEndedSection />}
+        {activeSection === "acceptance-future" && <AcceptanceFutureSection selectedLocation={selectedLocation} />}
       </main>
     </div>
   );

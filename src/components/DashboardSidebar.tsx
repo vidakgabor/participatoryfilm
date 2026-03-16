@@ -71,7 +71,7 @@ export function DashboardSidebar({
       <div className="p-5 border-t border-sidebar-border">
         <p className="text-[10px] uppercase tracking-widest text-sidebar-muted mb-2">Export</p>
         <PdfExportButton
-          sectionIds={["youth", "organizer", "comparison", "openended"]}
+          sectionIds={["youth", "organizer", "comparison", "openended", "acceptance-future"]}
           filename="impact-dashboard-export"
         />
       </div>

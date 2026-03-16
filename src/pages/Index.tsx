@@ -28,6 +28,7 @@ const Index = () => {
         {activeSection === "organizer" && <OrganizerSection selectedLocation={selectedLocation} />}
         {activeSection === "comparison" && <ComparisonSection selectedLocation={selectedLocation} />}
         {activeSection === "openended" && <OpenEndedSection />}
+        {activeSection === "acceptance-future" && <AcceptanceFutureSection selectedLocation={selectedLocation} />}
       </main>
     </div>
   );

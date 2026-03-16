@@ -14,6 +14,7 @@ const sections = [
   { id: "organizer", label: "ELTE hallgatók", icon: Film },
   { id: "comparison", label: "Összehasonlítás", icon: GitCompare },
   { id: "openended", label: "Nyitott kérdések", icon: MessageSquareText },
+  { id: "acceptance-future", label: "Elfogadás & Jövőkép", icon: HeartHandshake },
 ];
 
 export function DashboardSidebar({

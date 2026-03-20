@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
+import { DashboardSidebar, SidebarToggleButton } from "@/components/DashboardSidebar";
 import { YouthSection } from "@/components/YouthSection";
 import { OrganizerSection } from "@/components/OrganizerSection";
 import { ComparisonSection } from "@/components/ComparisonSection";
@@ -13,6 +13,7 @@ const allLocations = [...new Set([...locations, ...orgLocations])].sort();
 const Index = () => {
   const [activeSection, setActiveSection] = useState("youth");
   const [selectedLocation, setSelectedLocation] = useState("all");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -22,8 +23,13 @@ const Index = () => {
         selectedLocation={selectedLocation}
         onLocationChange={setSelectedLocation}
         locations={allLocations}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(false)}
       />
-      <main className="flex-1 p-6 overflow-y-auto">
+      {!sidebarOpen && (
+        <SidebarToggleButton onClick={() => setSidebarOpen(true)} />
+      )}
+      <main className={`flex-1 p-6 overflow-y-auto transition-all duration-300 ${!sidebarOpen ? 'pl-14' : ''}`}>
         {activeSection === "youth" && <YouthSection selectedLocation={selectedLocation} />}
         {activeSection === "organizer" && <OrganizerSection selectedLocation={selectedLocation} />}
         {activeSection === "comparison" && <ComparisonSection selectedLocation={selectedLocation} />}

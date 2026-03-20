@@ -39,7 +39,7 @@ export function DashboardSidebar({
       )}
 
       <aside
-        className={`fixed lg:static z-50 top-0 left-0 h-full w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0 transition-transform duration-300 ease-out ${
+        className={`fixed lg:static z-50 top-0 left-0 min-h-screen h-full w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0 transition-transform duration-300 ease-out ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:-translate-x-full"
         }`}
       >

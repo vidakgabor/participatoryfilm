@@ -90,7 +90,7 @@ export function YouthSection({ selectedLocation }: YouthSectionProps) {
       </div>
 
       {/* Summary metrics */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <MetricCard label="Válaszadók" value={n} sublabel="N" />
         <MetricCard label="Helyszínek" value={uniqueLocations} sublabel="település" />
         <MetricCard label="Elégedettség" value={avgSatisfaction.toFixed(1)} sublabel="átlag (1–5)" />
@@ -98,7 +98,7 @@ export function YouthSection({ selectedLocation }: YouthSectionProps) {
       </div>
 
       {/* General impact */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Általános elégedettség eloszlása"
           id="youth-satisfaction"
@@ -136,7 +136,7 @@ export function YouthSection({ selectedLocation }: YouthSectionProps) {
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Készségfejlődés — Radar"
           id="youth-radar"
@@ -169,7 +169,7 @@ export function YouthSection({ selectedLocation }: YouthSectionProps) {
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Hosszútávú hatások — Szervezők és jövőkép"
           id="youth-longterm"

@@ -161,7 +161,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
       </div>
 
       {/* Summary metrics */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <MetricCard label="Válaszadók" value={n} sublabel="N" />
         <MetricCard label="Elfogadás átlag" value={acceptanceOverallAvg} sublabel="q17–q19 (1–5)" />
         <MetricCard label="Jövőkép átlag" value={futureOverallAvg} sublabel="q22–q23 (1–5)" />
@@ -169,7 +169,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
       </div>
 
       {/* Row 1: Acceptance bars + Stacked Likert */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Elfogadás és közösségi kapcsolódás — Átlagok"
           id="acceptance-avgs"
@@ -209,7 +209,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
       </div>
 
       {/* Row 2: Future vision + Radar */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Jövőkép és továbbtanulási szándék"
           id="future-avgs"
@@ -251,7 +251,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
       </div>
 
       {/* Row 3: Positive rates + Location breakdown */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Pozitív válaszok aránya (4–5 értékek)"
           id="acceptance-positive"
@@ -316,7 +316,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
 
       {/* Row 4: School completion */}
       {schoolData && schoolData.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <ChartCard
             title="Iskola befejezése / továbbtanulás (q26)"
             id="school-completion"

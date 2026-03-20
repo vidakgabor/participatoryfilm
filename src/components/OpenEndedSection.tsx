@@ -81,7 +81,7 @@ export function OpenEndedSection() {
       </div>
 
       {/* Word Clouds */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Szófelhő — Fiatalok asszociációi"
           id="youth-wordcloud"
@@ -101,7 +101,7 @@ export function OpenEndedSection() {
       </div>
 
       {/* Word Frequency Bar Charts */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Top 15 szó — Fiatalok"
           id="youth-word-freq"
@@ -145,7 +145,7 @@ export function OpenEndedSection() {
       </div>
 
       {/* Thematic Analysis */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Tematikus elemzés — Fiatalok változásai (Q27)"
           id="youth-themes"
@@ -217,7 +217,7 @@ export function OpenEndedSection() {
       </ChartCard>
 
       {/* Notable quotes */}
-      <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div className="chart-card">
           <h3 className="text-sm font-display font-semibold text-primary mb-3">Kiemelkedő válaszok — Fiatalok</h3>
           <div className="space-y-2">

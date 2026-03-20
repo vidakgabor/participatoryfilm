@@ -85,14 +85,14 @@ export function OrganizerSection({ selectedLocation }: OrganizerSectionProps) {
         <p className="text-sm text-muted-foreground">Szervezői perspektíva — facilitátorok utánkövetése</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <MetricCard label="Válaszadók" value={n} sublabel="N" />
         <MetricCard label="Helyszínek" value={uniqueLocations} sublabel="település" />
         <MetricCard label="Hosszútávú hatás" value={avgImpact.toFixed(1)} sublabel="átlag (1–5)" />
         <MetricCard label="Önkéntes munka" value={`${volunteeredRate}%`} sublabel="workshop óta" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Hosszútávú hatás mértéke"
           id="org-impact"
@@ -132,7 +132,7 @@ export function OrganizerSection({ selectedLocation }: OrganizerSectionProps) {
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Társadalmi érzékenység változása"
           id="org-social"
@@ -167,7 +167,7 @@ export function OrganizerSection({ selectedLocation }: OrganizerSectionProps) {
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Önfejlődés"
           id="org-self"

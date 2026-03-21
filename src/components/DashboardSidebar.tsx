@@ -9,6 +9,8 @@ interface DashboardSidebarProps {
   locations: string[];
   isOpen: boolean;
   onToggle: () => void;
+  onBeforeExport?: () => Promise<void>;
+  onAfterExport?: () => void;
 }
 
 const sections = [
@@ -27,10 +29,11 @@ export function DashboardSidebar({
   locations,
   isOpen,
   onToggle,
+  onBeforeExport,
+  onAfterExport,
 }: DashboardSidebarProps) {
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -68,7 +71,6 @@ export function DashboardSidebar({
               key={s.id}
               onClick={() => {
                 onSectionChange(s.id);
-                // Close on mobile after selection
                 if (window.innerWidth < 1024) onToggle();
               }}
               className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm text-left transition-colors ${
@@ -100,9 +102,11 @@ export function DashboardSidebar({
 
         <div className="px-5 pb-4">
           <p className="text-[10px] uppercase tracking-widest text-sidebar-muted mb-2">Export</p>
-        <PdfExportButton
+          <PdfExportButton
             filename="impact-dashboard-export"
             selectedLocation={selectedLocation}
+            onBeforeExport={onBeforeExport}
+            onAfterExport={onAfterExport}
           />
         </div>
 

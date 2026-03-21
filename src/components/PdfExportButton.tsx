@@ -6,116 +6,116 @@ import jsPDF from "jspdf";
 interface PdfExportButtonProps {
   filename?: string;
   selectedLocation?: string;
-  onShowAllSections?: (show: boolean) => Promise<void>;
 }
 
-const SECTION_NAMES: Record<string, string> = {
-  youth: "Hátrányos helyzetű fiatalok",
-  organizer: "ELTE hallgatók (szervezők)",
-  comparison: "Összehasonlítás",
-  openended: "Nyitott kérdések",
-  "acceptance-future": "Elfogadás & Jövőkép",
-};
-
-function addLandscapeFooter(pdf: jsPDF, pageW: number, pageH: number, sectionName: string) {
+function addWatermark(pdf: jsPDF, pageW: number, pageH: number) {
   pdf.setFont("helvetica", "italic");
-  pdf.setFontSize(7);
+  pdf.setFontSize(8);
   pdf.setTextColor(160, 160, 160);
-  pdf.text(sectionName, 10, pageH - 4);
-  pdf.text("Vidák Gábor — Doktori kutatás © 2025", pageW / 2, pageH - 4, { align: "center" });
-  pdf.text("Részvételi Filmes Program — Hosszútávú hatásvizsgálat", pageW - 10, pageH - 4, { align: "right" });
+  pdf.text("Vidák Gábor — Doktori kutatás © 2025", pageW / 2, pageH - 8, { align: "center" });
+  pdf.text("Részvételi Filmes Program — Hosszútávú hatásvizsgálat", pageW / 2, pageH - 4, { align: "center" });
+  // Reset text color
   pdf.setTextColor(0, 0, 0);
 }
 
-export function PdfExportButton({ filename = "impact-dashboard", selectedLocation = "all", onShowAllSections }: PdfExportButtonProps) {
+export function PdfExportButton({ filename = "impact-dashboard", selectedLocation = "all" }: PdfExportButtonProps) {
   const [exporting, setExporting] = useState(false);
 
   const handleExport = useCallback(async () => {
     setExporting(true);
     try {
-      // Show all sections for capture
-      if (onShowAllSections) await onShowAllSections(true);
-
-      const locationLabel = selectedLocation === "all" ? "Összes helyszín" : selectedLocation;
-      const exportDate = new Date().toLocaleDateString("hu-HU");
-
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pW = pdf.internal.pageSize.getWidth();
-      const pH = pdf.internal.pageSize.getHeight();
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const usableW = pageW - margin * 2;
 
-      // ── Title page (portrait) — rendered as DOM for UTF-8 ──
-      const titleEl = document.createElement("div");
-      titleEl.style.cssText = `position:absolute;left:-9999px;top:0;width:794px;height:1123px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Source Sans Pro','Inter',sans-serif;color:#1a1a1a;`;
-      titleEl.innerHTML = `
-        <div style="text-align:center;">
-          <h1 style="font-size:40px;font-weight:bold;margin:0 0 12px;">Impact Dashboard</h1>
-          <p style="font-size:22px;margin:0 0 4px;color:#444;">Részvételi Filmes Program</p>
-          <p style="font-size:22px;margin:0 0 32px;color:#444;">Hosszútávú hatásvizsgálat</p>
-          <div style="width:80px;height:2px;background:#059669;margin:0 auto 32px;"></div>
-          <p style="font-size:18px;font-weight:bold;margin:0 0 8px;">Készítette: Vidák Gábor</p>
-          <p style="font-size:15px;margin:0 0 32px;color:#666;">Doktori (PhD) kutatás</p>
-          <p style="font-size:14px;margin:0 0 4px;color:#888;">Szűrő: ${locationLabel}</p>
-          <p style="font-size:14px;margin:0;color:#888;">Exportálva: ${exportDate}</p>
-        </div>
-        <p style="position:absolute;bottom:20px;font-size:10px;color:#bbb;font-style:italic;">Vidák Gábor — Doktori kutatás © 2025 | Részvételi Filmes Program — Hosszútávú hatásvizsgálat</p>
-      `;
-      document.body.appendChild(titleEl);
+      // ── Title page ──
+      addWatermark(pdf, pageW, pageH);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(24);
+      pdf.text("Impact Dashboard", pageW / 2, pageH / 2 - 30, { align: "center" });
 
-      try {
-        const titleDataUrl = await toPng(titleEl, { backgroundColor: "#ffffff", pixelRatio: 2 });
-        pdf.addImage(titleDataUrl, "PNG", 0, 0, pW, pH);
-      } catch (e) {
-        console.warn("Title page capture failed:", e);
-      }
-      document.body.removeChild(titleEl);
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Részvételi Filmes Program", pageW / 2, pageH / 2 - 16, { align: "center" });
+      pdf.text("Hosszútávú hatásvizsgálat", pageW / 2, pageH / 2 - 8, { align: "center" });
 
-      // ── Chart pages (landscape) — all sections ──
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Készítette: Vidák Gábor", pageW / 2, pageH / 2 + 8, { align: "center" });
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.text("Doktori (PhD) kutatás", pageW / 2, pageH / 2 + 16, { align: "center" });
+
+      pdf.setFontSize(9);
+      const locationLabel = selectedLocation === "all" ? "Összes helyszín" : selectedLocation;
+      pdf.text(`Szűrő: ${locationLabel}`, pageW / 2, pageH / 2 + 28, { align: "center" });
+      pdf.text(`Exportálva: ${new Date().toLocaleDateString("hu-HU")}`, pageW / 2, pageH / 2 + 34, { align: "center" });
+
+      // ── Collect all chart cards and metric cards ──
+      const allCards = Array.from(document.querySelectorAll(".chart-card, .metric-card, [data-pdf-section] > .mb-6")) as HTMLElement[];
+      
+      // Group: get section headers and their charts
       const sections = document.querySelectorAll("[data-pdf-section]");
-
+      
       for (const section of Array.from(sections)) {
         const sectionEl = section as HTMLElement;
-        const sectionId = sectionEl.dataset.pdfSection || "";
-        const sectionName = SECTION_NAMES[sectionId] || sectionId;
-
-        // Get header + metrics as first page of section
+        
+        // Get section header
         const header = sectionEl.querySelector(".mb-6") as HTMLElement;
-        const metricRow = sectionEl.querySelector(".grid.grid-cols-1.md\\:grid-cols-4, .grid.grid-cols-2.md\\:grid-cols-4") as HTMLElement;
-
+        
+        // Get metric cards row
+        const metricRow = sectionEl.querySelector(".grid.grid-cols-2, .grid.grid-cols-1.md\\:grid-cols-4") as HTMLElement;
+        
+        // Get all chart cards in this section
+        const charts = Array.from(sectionEl.querySelectorAll(".chart-card")) as HTMLElement[];
+        
+        // Capture header + metrics together if they exist
         if (header || metricRow) {
+          const headerElements: HTMLElement[] = [];
+          if (header) headerElements.push(header);
+          if (metricRow) headerElements.push(metricRow);
+          
+          // Create a wrapper to capture them together
           const wrapper = document.createElement("div");
-          wrapper.style.cssText = "position:absolute;left:-9999px;top:0;width:1100px;background:#fff;padding:24px;font-family:'Source Sans Pro','Inter',sans-serif;";
-          if (header) wrapper.appendChild(header.cloneNode(true));
-          if (metricRow) wrapper.appendChild(metricRow.cloneNode(true));
+          wrapper.style.cssText = "position:absolute;left:-9999px;top:0;width:800px;background:#fff;padding:16px;";
           document.body.appendChild(wrapper);
-
+          
+          for (const el of headerElements) {
+            wrapper.appendChild(el.cloneNode(true));
+          }
+          
           try {
-            const dataUrl = await toPng(wrapper, { backgroundColor: "#ffffff", pixelRatio: 1.5 });
+            const dataUrl = await toPng(wrapper, {
+              backgroundColor: "#ffffff",
+              pixelRatio: 1.5,
+              quality: 0.85,
+            });
+            
             const img = new Image();
-            await new Promise<void>((resolve, reject) => { img.onload = () => resolve(); img.onerror = reject; img.src = dataUrl; });
-
-            pdf.addPage("a4", "landscape");
-            const lW = pdf.internal.pageSize.getWidth();
-            const lH = pdf.internal.pageSize.getHeight();
-            const margin = 10;
-            const usableW = lW - margin * 2;
-            const usableH = lH - margin * 2 - 8;
-
+            await new Promise<void>((resolve, reject) => {
+              img.onload = () => resolve();
+              img.onerror = reject;
+              img.src = dataUrl;
+            });
+            
+            pdf.addPage("a4", "portrait");
+            addWatermark(pdf, pageW, pageH);
+            
             const imgRatio = img.width / img.height;
-            let imgW = usableW;
-            let imgH = imgW / imgRatio;
-            if (imgH > usableH) { imgH = usableH; imgW = imgH * imgRatio; }
-
-            const x = margin + (usableW - imgW) / 2;
-            pdf.addImage(dataUrl, "JPEG", x, margin, imgW, imgH, undefined, "MEDIUM");
-            addLandscapeFooter(pdf, lW, lH, sectionName);
+            const imgW = usableW;
+            const imgH = imgW / imgRatio;
+            pdf.addImage(dataUrl, "JPEG", margin, margin, imgW, Math.min(imgH, pageH - margin * 2), undefined, "MEDIUM");
           } catch (e) {
             console.warn("Header capture failed:", e);
           }
+          
           document.body.removeChild(wrapper);
         }
-
-        // Capture each chart card
-        const charts = Array.from(sectionEl.querySelectorAll(".chart-card")) as HTMLElement[];
+        
+        // Capture each chart card individually
         for (const chart of charts) {
           try {
             const dataUrl = await toPng(chart, {
@@ -123,30 +123,34 @@ export function PdfExportButton({ filename = "impact-dashboard", selectedLocatio
               pixelRatio: 1.5,
               filter: (node) => {
                 if (node instanceof HTMLElement && node.dataset.pdfExclude === "true") return false;
+                // Exclude PNG download buttons
                 if (node instanceof HTMLElement && node.tagName === "BUTTON" && node.title === "Export PNG") return false;
                 return true;
               },
             });
-
+            
             const img = new Image();
-            await new Promise<void>((resolve, reject) => { img.onload = () => resolve(); img.onerror = reject; img.src = dataUrl; });
-
-            pdf.addPage("a4", "landscape");
-            const lW = pdf.internal.pageSize.getWidth();
-            const lH = pdf.internal.pageSize.getHeight();
-            const margin = 10;
-            const usableW = lW - margin * 2;
-            const usableH = lH - margin * 2 - 8;
-
+            await new Promise<void>((resolve, reject) => {
+              img.onload = () => resolve();
+              img.onerror = reject;
+              img.src = dataUrl;
+            });
+            
+            pdf.addPage("a4", "portrait");
+            addWatermark(pdf, pageW, pageH);
+            
             const imgRatio = img.width / img.height;
-            let imgW = usableW;
+            const imgW = usableW;
             let imgH = imgW / imgRatio;
-            if (imgH > usableH) { imgH = usableH; imgW = imgH * imgRatio; }
-
-            const x = margin + (usableW - imgW) / 2;
-            const y = margin + (usableH - imgH) / 2;
-            pdf.addImage(dataUrl, "JPEG", x, y, imgW, imgH, undefined, "MEDIUM");
-            addLandscapeFooter(pdf, lW, lH, sectionName);
+            
+            // If image is taller than page, scale down
+            if (imgH > pageH - margin * 2) {
+              imgH = pageH - margin * 2;
+              const scaledW = imgH * imgRatio;
+              pdf.addImage(dataUrl, "JPEG", margin + (usableW - scaledW) / 2, margin, scaledW, imgH, undefined, "MEDIUM");
+            } else {
+              pdf.addImage(dataUrl, "JPEG", margin, margin, imgW, imgH, undefined, "MEDIUM");
+            }
           } catch (e) {
             console.warn("Chart capture failed:", e);
           }
@@ -157,10 +161,9 @@ export function PdfExportButton({ filename = "impact-dashboard", selectedLocatio
     } catch (err) {
       console.error("PDF export failed:", err);
     } finally {
-      if (onShowAllSections) await onShowAllSections(false);
       setExporting(false);
     }
-  }, [filename, selectedLocation, onShowAllSections]);
+  }, [filename, selectedLocation]);
 
   return (
     <button

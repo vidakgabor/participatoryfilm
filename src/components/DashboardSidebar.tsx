@@ -50,10 +50,11 @@ export function DashboardSidebar({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <BarChart3 className="w-5 h-5 text-sidebar-primary" />
-              <h1 className="text-sm font-display font-bold">Impact Dashboard</h1>
+              <h1 className="text-sm font-display font-bold">Doktori disszertáció</h1>
             </div>
-            <p className="text-xs text-sidebar-muted">Részvételi Filmes Program</p>
-            <p className="text-xs text-sidebar-muted">Hosszútávú hatásvizsgálat</p>
+            <p className="text-xs text-sidebar-muted">Hosszú távú eredmények és utánkövetés</p>
+            <p className="text-xs text-sidebar-muted">Részvételi filmes workshopok résztvevőinek tapasztalatai és változásmintázatai.</p>
+            <p className="text-xs text-sidebar-muted">Vidák Gábor</p>
           </div>
           <button
             onClick={onToggle}

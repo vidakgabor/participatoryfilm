@@ -1,174 +1,163 @@
-// Parsed and aggregated data from the youth participants Excel (N=78)
+// Hátrányos helyzetű fiatalok — utánkövető kérdőív (N=78)
+// Forrás: hosszutavu_resztvevok_tisztitva.xlsx / "Tisztított_adat" munkalap.
+// Minden Likert-tétel 1–5 skálán; a hiányzó válasz null (nem 0), és kizárásra kerül az átlagokból.
+import { avgOf, distributionOf, positivePct, validN, type DistBin } from "./statsHelpers";
 
 export interface YouthRow {
   gender: string;
-  age: number;
+  age: number | null;
   location: string;
-  satisfaction: number;
+  workshopDate: string;
+  responseDate: string;
+  followUpDays: number;
+  satisfaction: number | null;
   wouldReturn: string;
-  q9: number; q10: number; q11: number; q12: number; q13: number;
-  q14: number; q15: number; q16: number; q17: number; q18: number;
-  q19: number; q20: number; q21: number; q22: number; q23: number;
-  q24: number; q25: number; q26: number;
+  q9: number | null; q10: number | null; q11: number | null; q12: number | null;
+  q13: number | null; q14: number | null; q15: number | null; q16: number | null;
+  q17: number | null; q18: number | null; q19: number | null; q20: number | null;
+  q21: number | null; q22: number | null; q23: number | null; q24: number | null;
+  q25: string;
+  q26: number | null;
 }
 
-function parseScore(val: string): number {
-  if (!val) return 0;
-  const m = val.match(/^(\d)/);
-  if (m) return parseInt(m[1]);
-  const num = parseInt(val);
-  return isNaN(num) ? 0 : num;
-}
-
-// Raw data embedded from parsed Excel
-const rawRows: string[][] = [
-  ["lány","16","Kémes (2022.05.27-29.)","5","igen","4","4","5","5","4","4","3","4","4","5","3","3","4","3","4","5","igen","3"],
-  ["lány","18","Kémes (2022.05.27-29.)","5","igen","4","3","4","4","4","3","4","4","5","5","3","3","5","3","3","2","nem","3"],
-  ["lány","17","Kémes (2022.05.27-29.)","5","igen","3","3","3","4","4","4","3","4","4","4","3","3","5","2","2","3","nem","3"],
-  ["lány","14","Kémes (2022.05.27-29.)","5","igen","4","3","4","4","3","3","4","5","5","4","3","3","5","4","3","3","nem","3"],
-  ["fiú","14","Kémes (2022.05.27-29.)","5","igen","3","3","3","3","4","3","5","5","4","4","5","4","5","3","3","3","nem","3"],
-  ["fiú","13","Kémes (2022.05.27-29.)","5","igen","3","3","3","4","3","3","3","4","5","4","4","3","5","3","3","3","nem","3"],
-  ["fiú","13","Kémes (2022.05.27-29.)","5","igen","4","4","4","5","4","4","5","5","5","5","5","4","5","4","3","4","nem","4"],
-  ["fiú","13","Istvándi (2023.12.15-17.)","5","igen","5","4","4","4","4","3","4","5","5","5","4","4","5","3","4","4","igen","5"],
-  ["lány","13","Istvándi (2023.12.15-17.)","5","igen","3","3","4","3","3","3","4","5","5","4","3","3","4","3","3","2","nem","5"],
-  ["fiú","12","Istvándi (2023.12.15-17.)","5","igen","4","3","3","3","3","2","4","4","4","4","4","3","4","3","3","4","nem","4"],
-  ["lány","14","Istvándi (2023.12.15-17.)","5","igen","5","5","4","5","4","4","5","5","5","5","4","3","5","5","4","4","nem","4"],
-  ["lány","14","Istvándi (2023.12.15-17.)","5","igen","3","3","3","4","4","3","5","5","4","4","4","3","5","4","3","4","nem","4"],
-  ["lány","17","Sárosd (2022.12.09-11.)","5","igen","4","4","5","4","5","5","5","5","5","5","4","4","5","5","5","5","nem","1"],
-  ["lány","16","Sárosd (2022.12.09-11.)","5","igen","4","4","5","4","5","4","3","5","4","4","4","4","5","4","5","5","nem","5"],
-  ["lány","17","Sárosd (2022.12.09-11.)","5","igen","4","5","5","4","5","4","5","5","4","4","5","4","5","4","4","3","nem","1"],
-  ["lány","14","Sárosd (2022.12.09-11.)","5","igen","3","3","2","3","3","2","3","2","4","3","3","3","4","2","2","1","nem","1"],
-  ["fiú","13","Sárosd (2022.12.09-11.)","5","igen","4","4","4","5","5","4","5","5","5","4","4","4","5","3","3","5","nem","4"],
-  ["lány","16","Sárosd (2022.12.09-11.)","5","igen","3","3","3","3","4","4","4","4","3","4","4","3","2","2","2","2","nem","1"],
-  ["lány","13","Sárosd (2022.12.09-11.)","4","igen","3","3","4","3","3","4","3","4","3","3","3","3","3","2","2","2","nem","3"],
-  ["fiú","14","Kémes (2022.05.27-29.)","5","igen","4","5","4","5","5","4","5","5","5","5","5","4","5","5","4","5","igen","5"],
-  ["lány","18","Kémes (2022.05.27-29.)","4","igen","3","3","4","4","3","4","4","4","4","4","3","3","4","3","4","2","nem","2"],
-  ["fiú","16","Kémes (2022.05.27-29.)","5","igen","4","4","4","5","4","4","5","3","5","5","4","3","5","4","4","4","nem","4"],
-  ["fiú","14","Kémes (2022.05.27-29.)","5","igen","3","4","4","4","3","3","4","4","5","4","4","3","4","4","3","4","nem","1"],
-  ["lány","15","Istvándi (2023.12.15-17.)","5","igen","5","3","5","5","5","5","5","5","5","5","5","5","5","5","5","4","igen","4"],
-  ["fiú","17","Sárosd (2022.12.09-11.)","5","igen","4","4","5","4","5","4","5","5","5","5","4","4","5","4","4","3","nem","4"],
-  ["fiú","16","Sárosd (2022.12.09-11.)","5","igen","4","4","5","5","4","4","5","5","5","5","3","3","5","3","3","5","nem","3"],
-  ["fiú","18","Mágocs (2023.05.12-14.)","5","igen","4","4","4","3","4","4","5","5","5","5","3","4","5","4","4","5","igen","3"],
-  ["fiú","14","Mágocs (2023.05.12-14.)","5","igen","5","4","4","5","5","3","4","5","5","5","3","4","5","5","4","5","igen","5"],
-  ["fiú","16","Mágocs (2023.05.12-14.)","5","igen","4","4","4","5","5","4","4","5","5","4","3","3","4","4","3","4","igen","4"],
-  ["fiú","14","Mágocs (2023.05.12-14.)","5","igen","3","3","3","2","3","3","3","4","4","3","3","3","4","3","3","3","nem","2"],
-  ["lány","14","Mágocs (2023.05.12-14.)","5","igen","4","3","4","4","3","3","4","5","4","3","3","4","4","3","3","4","nem","4"],
-  ["fiú","15","Mágocs (2023.05.12-14.)","5","igen","3","3","4","4","3","3","3","1","3","3","4","3","5","3","3","2","nem","1"],
-  ["lány","14","Mágocs (2023.05.12-14.)","5","igen","3","3","3","4","3","4","4","4","3","4","3","3","4","4","4","3","nem","3"],
-  ["fiú","15","Mágocs (2023.05.12-14.)","5","igen","3","3","3","3","3","3","3","4","3","3","3","3","4","3","3","3","nem","2"],
-  ["fiú","14","Mágocs (2023.05.12-14.)","4","igen","3","3","2","2","3","3","3","3","3","3","3","2","3","3","3","2","nem","1"],
-  ["fiú","15","Mágocs (2023.05.12-14.)","5","igen","4","3","3","4","4","4","5","5","5","4","3","3","5","4","4","4","igen","4"],
-  ["fiú","13","Mágocs (2023.05.12-14.)","5","igen","4","4","3","4","4","4","5","5","5","5","4","3","5","5","4","5","igen","5"],
-  ["fiú","13","Mágocs (2023.05.12-14.)","5","igen","2","3","3","2","3","2","3","2","3","3","3","3","4","3","2","4","igen","1"],
-  ["fiú","13","Mágocs (2023.05.12-14.)","5","igen","3","3","2","2","3","3","3","4","4","4","4","3","4","3","3","3","nem","2"],
-  ["lány","18","Kémes (2022.05.27-29.)","5","igen","3","3","4","4","3","3","5","5","5","5","4","3","5","4","4","5","nem","1"],
-  ["fiú","18","Sárosd (2022.12.09-11.)","5","igen","5","4","5","5","4","4","5","5","4","5","5","4","5","5","3","5","nem","1"],
-  ["lány","15","Istvándi (2023.12.15-17.)","5","igen","4","3","3","4","4","4","5","5","4","4","3","3","4","3","4","4","nem","1"],
-  ["lány","13","Istvándi (2023.12.15-17.)","4","igen","3","4","4","4","4","3","5","5","4","4","3","3","5","4","4","5","nem","2"],
-  ["lány","13","Istvándi (2023.12.15-17.)","5","igen","4","4","3","3","4","4","5","5","4","4","3","3","4","3","4","4","nem","3"],
-  ["lány","12","Istvándi (2023.12.15-17.)","5","igen","4","4","5","4","4","5","5","5","5","4","4","3","5","3","3","4","nem","3"],
-  ["fiú","13","Istvándi (2023.12.15-17.)","5","igen","3","4","3","3","4","4","3","3","4","3","4","3","4","3","3","2","nem","1"],
-  ["fiú","15","Istvándi (2023.12.15-17.)","5","igen","3","4","4","3","3","3","4","4","4","5","5","4","4","5","3","3","nem","2"],
-  ["fiú","13","Istvándi (2023.12.15-17.)","5","igen","3","4","3","3","4","4","5","5","4","3","4","3","5","4","3","4","nem","5"],
-  ["fiú","16","Istvándi (2023.12.15-17.)","5","igen","3","4","4","3","5","4","5","4","4","4","5","4","4","4","5","4","igen","2"],
-  ["lány","17","Kémes (2022.05.27-29.)","5","igen","3","3","4","3","3","4","4","5","4","4","3","3","4","5","3","4","nem","4"],
-  ["lány","17","Mágocs (2023.05.12-14.)","5","igen","4","4","5","3","4","4","5","5","5","4","3","3","5","4","4","5","nem","3"],
-  ["lány","16","Mágocs (2023.05.12-14.)","5","igen","3","3","3","4","4","4","5","5","3","4","3","3","5","5","3","5","igen","4"],
-  ["fiú","12","Pécs (2024.05.24-26.)","5","igen","3","3","2","2","2","3","4","5","4","4","2","2","5","5","4","1","nem","1"],
-  ["fiú","15","Pécs (2024.05.24-26.)","4","igen","3","2","2","3","2","3","3","4","4","3","2","2","4","2","1","1","nem","1"],
-  ["fiú","15","Pécs (2024.05.24-26.)","5","igen","1","1","2","2","2","2","3","3","3","3","3","2","2","2","1","1","nem","1"],
-  ["fiú","12","Pécs (2024.05.24-26.)","4","nem tudom","3","3","2","2","2","3","4","3","4","3","2","3","4","4","3","2","nem","1"],
-  ["lány","13","Pécs (2024.05.24-26.)","4","igen","4","3","3","3","4","3","4","5","4","4","3","3","4","3","4","4","igen","1"],
-  ["fiú","12","Pécs (2024.05.24-26.)","4","igen","4","3","4","4","3","3","4","5","4","4","3","2","3","3","2","2","nem","2"],
-  ["lány","12","Pécs (2024.05.24-26.)","5","igen","4","3","4","4","4","3","4","3","3","4","2","2","4","4","3","4","nem","1"],
-  ["fiú","12","Pécs (2024.05.24-26.)","4","igen","3","3","4","3","3","2","4","3","3","4","3","3","5","4","2","5","igen","3"],
-  ["lány","13","Pécs (2024.05.24-26.)","5","igen","4","4","3","3","4","3","4","5","4","4","3","3","4","3","3","5","igen","3"],
-  ["fiú","14","Pécs (2024.05.24-26.)","5","igen","3","4","3","3","4","3","3","5","4","4","2","3","2","3","2","2","nem","1"],
-  ["fiú","14","Gilvánfa (2024.11.15-17.)","5","igen","4","4","5","5","4","3","5","4","5","5","4","3","5","4","5","5","igen","3"],
-  ["fiú","12","Gilvánfa (2024.11.15-17.)","5","igen","3","3","4","3","4","4","5","4","5","4","3","3","5","4","4","5","igen","5"],
-  ["lány","12","Gilvánfa (2024.11.15-17.)","5","igen","5","4","5","4","5","5","4","5","4","5","4","3","5","4","3","4","igen","5"],
-  ["lány","12","Gilvánfa (2024.11.15-17.)","5","igen","3","3","4","4","5","5","5","5","5","5","5","4","4","5","5","5","igen","5"],
-  ["fiú","17","Gilvánfa (2024.11.15-17.)","5","igen","4","3","3","4","4","3","4","5","4","4","3","3","4","4","3","3","nem","1"],
-  ["lány","14","Somogyszentpál (2025.05.23-25.)","5","igen","3","4","4","4","5","3","5","5","4","4","3","2","5","4","3","4","nem","0"],
-  ["lány","16","Somogyszentpál (2025.05.23-25.)","5","igen","4","3","4","4","4","3","5","5","5","4","3","3","4","3","4","4","nem","2"],
-  ["fiú","15","Somogyszentpál (2025.05.23-25.)","5","nem tudom","5","4","3","3","4","4","5","5","4","3","3","4","4","3","4","3","nem","3"],
-  ["fiú","19","Somogyszentpál (2025.05.23-25.)","4","igen","2","2","3","4","2","3","2","3","2","3","4","3","2","1","1","1","nem","1"],
-  ["lány","18","Somogyszentpál (2025.05.23-25.)","5","igen","5","5","5","4","5","5","5","5","4","5","5","5","5","5","5","3","igen","4"],
-  ["lány","18","Somogyszentpál (2025.05.23-25.)","5","igen","4","3","5","3","5","5","5","5","4","4","3","5","3","2","2","2","nem","3"],
-  ["lány","14","Somogyszentpál (2025.05.23-25.)","5","igen","5","5","5","5","5","5","5","5","5","3","5","5","5","5","5","5","igen","5"],
-  ["fiú","12","Somogyszentpál (2025.05.23-25.)","5","igen","5","5","5","3","5","1","3","5","4","5","5","5","5","3","4","5","igen","4"],
-  ["fiú","12","Somogyszentpál (2025.05.23-25.)","5","igen","5","4","3","5","4","1","5","5","3","4","3","3","4","4","5","3","igen","4"],
-  ["fiú","13","Somogyszentpál (2025.05.23-25.)","5","igen","3","5","4","4","5","4","5","5","4","3","3","4","5","5","4","3","igen","3"],
-  ["lány","14","Kémes (2022.05.27-29.)","5","igen","4","4","4","3","4","4","3","5","5","4","4","3","5","2","3","3","nem","3"],
+export const youthData: YouthRow[] = [
+  {"gender": "lány", "age": 16, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-03-27", "followUpDays": 668, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 5, "q13": 4, "q14": 4, "q15": 3, "q16": 4, "q17": 4, "q18": 5, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 4, "q24": 5, "q25": "igen", "q26": 3},
+  {"gender": "lány", "age": 18, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-03-27", "followUpDays": 668, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 4, "q12": 4, "q13": 4, "q14": 3, "q15": 4, "q16": 4, "q17": 5, "q18": 5, "q19": 3, "q20": 3, "q21": 5, "q22": 3, "q23": 3, "q24": 2, "q25": "nem", "q26": 3},
+  {"gender": "lány", "age": 17, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-03-27", "followUpDays": 668, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 4, "q13": 4, "q14": 4, "q15": 3, "q16": 4, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 2, "q23": 2, "q24": 3, "q25": "nem", "q26": 3},
+  {"gender": "lány", "age": 14, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-03-27", "followUpDays": 668, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 4, "q12": 4, "q13": 3, "q14": 3, "q15": 4, "q16": 5, "q17": 5, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 4, "q23": 3, "q24": 3, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 14, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-03-28", "followUpDays": 669, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 3, "q13": 4, "q14": 3, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 5, "q20": 4, "q21": 5, "q22": 3, "q23": 3, "q24": 3, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 13, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-03-28", "followUpDays": 669, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 4, "q13": 3, "q14": 3, "q15": 3, "q16": 4, "q17": 5, "q18": 4, "q19": 4, "q20": 3, "q21": 5, "q22": 3, "q23": 3, "q24": 3, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 13, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-03-28", "followUpDays": 669, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 4, "q12": 5, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 5, "q20": 4, "q21": 5, "q22": 4, "q23": 3, "q24": 4, "q25": "nem", "q26": 4},
+  {"gender": "fiú", "age": 13, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2024-04-12", "followUpDays": 117, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 4, "q11": 4, "q12": 4, "q13": 4, "q14": 3, "q15": 4, "q16": 5, "q17": 5, "q18": 5, "q19": 4, "q20": 4, "q21": 5, "q22": 3, "q23": 4, "q24": 4, "q25": "igen", "q26": 5},
+  {"gender": "lány", "age": 13, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2024-04-13", "followUpDays": 118, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 3, "q13": 3, "q14": 3, "q15": 4, "q16": 5, "q17": 5, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 3, "q24": 2, "q25": "nem", "q26": 5},
+  {"gender": "fiú", "age": 12, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2024-04-13", "followUpDays": 118, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 3, "q12": 3, "q13": 3, "q14": 2, "q15": 4, "q16": 4, "q17": 4, "q18": 4, "q19": 4, "q20": 3, "q21": 4, "q22": 3, "q23": 3, "q24": 4, "q25": "nem", "q26": 4},
+  {"gender": "lány", "age": 14, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2024-04-13", "followUpDays": 118, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 5, "q11": 4, "q12": 5, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 4, "q20": 3, "q21": 5, "q22": 5, "q23": 4, "q24": 4, "q25": "nem", "q26": 4},
+  {"gender": "lány", "age": 14, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2024-04-13", "followUpDays": 118, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 4, "q13": 4, "q14": 3, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 4, "q20": 3, "q21": 5, "q22": 4, "q23": 3, "q24": 4, "q25": "nem", "q26": 4},
+  {"gender": "lány", "age": 17, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2024-04-15", "followUpDays": 491, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 4, "q13": 5, "q14": 5, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 4, "q20": 4, "q21": 5, "q22": 5, "q23": 5, "q24": 5, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 16, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2024-04-15", "followUpDays": 491, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 4, "q13": 5, "q14": 4, "q15": 3, "q16": 5, "q17": 4, "q18": 4, "q19": 4, "q20": 4, "q21": 5, "q22": 4, "q23": 5, "q24": 5, "q25": "nem", "q26": 5},
+  {"gender": "lány", "age": 17, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2024-04-15", "followUpDays": 491, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 5, "q11": 5, "q12": 4, "q13": 5, "q14": 4, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 5, "q20": 4, "q21": 5, "q22": 4, "q23": 4, "q24": 3, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 14, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2024-04-15", "followUpDays": 491, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 2, "q12": 3, "q13": 3, "q14": 2, "q15": 3, "q16": 2, "q17": 4, "q18": 3, "q19": 3, "q20": 3, "q21": 4, "q22": 2, "q23": 2, "q24": 1, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 13, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2024-04-16", "followUpDays": 492, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 4, "q12": 5, "q13": 5, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 4, "q19": 4, "q20": 4, "q21": 5, "q22": 3, "q23": 3, "q24": 5, "q25": "nem", "q26": 4},
+  {"gender": "lány", "age": 16, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2024-04-16", "followUpDays": 492, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 3, "q13": 4, "q14": 4, "q15": 4, "q16": 4, "q17": 3, "q18": 4, "q19": 4, "q20": 3, "q21": 2, "q22": 2, "q23": 2, "q24": 2, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 14, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-04-17", "followUpDays": 689, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 4, "q12": 3, "q13": 4, "q14": 4, "q15": 3, "q16": 5, "q17": 5, "q18": 4, "q19": 4, "q20": 3, "q21": 5, "q22": 2, "q23": 3, "q24": 3, "q25": "nem", "q26": 3},
+  {"gender": "lány", "age": 13, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2024-04-20", "followUpDays": 496, "satisfaction": 4, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 3, "q13": 3, "q14": 4, "q15": 3, "q16": 4, "q17": 3, "q18": 3, "q19": 3, "q20": 3, "q21": 3, "q22": 2, "q23": 2, "q24": 2, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 14, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2024-05-29", "followUpDays": 731, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 5, "q11": 4, "q12": 5, "q13": 5, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 5, "q20": 4, "q21": 5, "q22": 5, "q23": 4, "q24": 5, "q25": "igen", "q26": 5},
+  {"gender": "lány", "age": 18, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2025-06-17", "followUpDays": 1115, "satisfaction": 4, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 4, "q13": 3, "q14": 4, "q15": 4, "q16": 4, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 4, "q24": 2, "q25": "nem", "q26": 2},
+  {"gender": "fiú", "age": 16, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2025-06-17", "followUpDays": 1115, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 4, "q12": 5, "q13": 4, "q14": 4, "q15": 5, "q16": 3, "q17": 5, "q18": 5, "q19": 4, "q20": 3, "q21": 5, "q22": 4, "q23": 4, "q24": 4, "q25": "nem", "q26": 4},
+  {"gender": "fiú", "age": 14, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2025-06-17", "followUpDays": 1115, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 4, "q12": 4, "q13": 3, "q14": 3, "q15": 4, "q16": 4, "q17": 5, "q18": 4, "q19": 4, "q20": 3, "q21": 4, "q22": 4, "q23": 3, "q24": 4, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 15, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2026-02-15", "followUpDays": 791, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 3, "q11": 5, "q12": 5, "q13": 5, "q14": 5, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 5, "q20": 5, "q21": 5, "q22": 5, "q23": 5, "q24": 4, "q25": "igen", "q26": 4},
+  {"gender": "fiú", "age": 17, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2025-06-17", "followUpDays": 919, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 4, "q13": 5, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 4, "q20": 4, "q21": 5, "q22": 4, "q23": 4, "q24": 3, "q25": "nem", "q26": 4},
+  {"gender": "fiú", "age": 16, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2025-06-19", "followUpDays": 921, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 5, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 3, "q20": 3, "q21": 5, "q22": 3, "q23": 3, "q24": 5, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 18, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-19", "followUpDays": 767, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 4, "q12": 3, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 3, "q20": 4, "q21": 5, "q22": 4, "q23": 4, "q24": 5, "q25": "igen", "q26": 3},
+  {"gender": "fiú", "age": 14, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-19", "followUpDays": 767, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 4, "q11": 4, "q12": 5, "q13": 5, "q14": 3, "q15": 4, "q16": 5, "q17": 5, "q18": 5, "q19": 3, "q20": 4, "q21": 5, "q22": 5, "q23": 4, "q24": 5, "q25": "igen", "q26": 5},
+  {"gender": "fiú", "age": 16, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-19", "followUpDays": 767, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 4, "q12": 5, "q13": 5, "q14": 4, "q15": 4, "q16": 5, "q17": 5, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 4, "q23": 3, "q24": 4, "q25": "igen", "q26": 4},
+  {"gender": "fiú", "age": 14, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-19", "followUpDays": 767, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 2, "q13": 3, "q14": 3, "q15": 3, "q16": 4, "q17": 4, "q18": 3, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 3, "q24": 3, "q25": "nem", "q26": 2},
+  {"gender": "lány", "age": 14, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-19", "followUpDays": 767, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 4, "q12": 4, "q13": 3, "q14": 3, "q15": 4, "q16": 5, "q17": 4, "q18": 3, "q19": 3, "q20": 4, "q21": 4, "q22": 3, "q23": 3, "q24": 4, "q25": "nem", "q26": 4},
+  {"gender": "fiú", "age": 15, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-19", "followUpDays": 767, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 4, "q13": 3, "q14": 3, "q15": 3, "q16": 1, "q17": 3, "q18": 3, "q19": 4, "q20": 3, "q21": 5, "q22": 3, "q23": 3, "q24": 2, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 14, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-20", "followUpDays": 768, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 4, "q13": 3, "q14": 4, "q15": 4, "q16": 4, "q17": 3, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 4, "q23": 4, "q24": 3, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 15, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-20", "followUpDays": 768, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 3, "q13": 3, "q14": 3, "q15": 3, "q16": 4, "q17": 3, "q18": 3, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 3, "q24": 3, "q25": "nem", "q26": 2},
+  {"gender": "fiú", "age": 14, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-20", "followUpDays": 768, "satisfaction": 4, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 2, "q12": 2, "q13": 3, "q14": 3, "q15": 3, "q16": 3, "q17": 3, "q18": 3, "q19": 3, "q20": 2, "q21": 3, "q22": 3, "q23": 3, "q24": 2, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 15, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-20", "followUpDays": 768, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 3, "q12": 4, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 4, "q23": 4, "q24": 4, "q25": "igen", "q26": 4},
+  {"gender": "fiú", "age": 13, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-22", "followUpDays": 770, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 3, "q12": 4, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 4, "q20": 3, "q21": 5, "q22": 5, "q23": 4, "q24": 5, "q25": "igen", "q26": 5},
+  {"gender": "fiú", "age": 13, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-22", "followUpDays": 770, "satisfaction": 5, "wouldReturn": "igen", "q9": 2, "q10": 3, "q11": 3, "q12": 2, "q13": 3, "q14": 2, "q15": 3, "q16": 2, "q17": 3, "q18": 3, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 2, "q24": 4, "q25": "igen", "q26": 1},
+  {"gender": "fiú", "age": 13, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-25", "followUpDays": 773, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 2, "q12": 2, "q13": 3, "q14": 3, "q15": 3, "q16": 4, "q17": 4, "q18": 4, "q19": 4, "q20": 3, "q21": 4, "q22": 3, "q23": 3, "q24": 3, "q25": "nem", "q26": 2},
+  {"gender": "lány", "age": 18, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2025-06-25", "followUpDays": 1123, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 4, "q13": 3, "q14": 3, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 4, "q20": 3, "q21": 5, "q22": 4, "q23": 4, "q24": 5, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 18, "location": "Sárosd", "workshopDate": "2022.12.09-11.", "responseDate": "2025-06-25", "followUpDays": 927, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 4, "q11": 5, "q12": 5, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 4, "q18": 5, "q19": 5, "q20": 4, "q21": 5, "q22": 5, "q23": 3, "q24": 5, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 15, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 3, "q12": 4, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 4, "q24": 4, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 13, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 4, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 4, "q12": 4, "q13": 4, "q14": 3, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 4, "q23": 4, "q24": 5, "q25": "nem", "q26": 2},
+  {"gender": "lány", "age": 13, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 3, "q12": 3, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 4, "q24": 4, "q25": "nem", "q26": 3},
+  {"gender": "lány", "age": 12, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 4, "q13": 4, "q14": 5, "q15": 5, "q16": 5, "q17": 5, "q18": 4, "q19": 4, "q20": 3, "q21": 5, "q22": 3, "q23": 3, "q24": 4, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 13, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 3, "q12": 3, "q13": 4, "q14": 4, "q15": 3, "q16": 3, "q17": 4, "q18": 3, "q19": 4, "q20": 3, "q21": 4, "q22": 3, "q23": 3, "q24": 2, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 15, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 4, "q12": 3, "q13": 3, "q14": 3, "q15": 4, "q16": 4, "q17": 4, "q18": 5, "q19": 5, "q20": 4, "q21": 4, "q22": 5, "q23": 3, "q24": 3, "q25": "nem", "q26": 2},
+  {"gender": "fiú", "age": 13, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 3, "q12": 3, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 4, "q18": 3, "q19": 4, "q20": 3, "q21": 5, "q22": 4, "q23": 3, "q24": 4, "q25": "nem", "q26": 5},
+  {"gender": "fiú", "age": 16, "location": "Istvándi", "workshopDate": "2023.12.15-17.", "responseDate": "2025-06-25", "followUpDays": 556, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 4, "q12": 3, "q13": 5, "q14": 4, "q15": 5, "q16": 4, "q17": 4, "q18": 4, "q19": 5, "q20": 4, "q21": 4, "q22": 4, "q23": 5, "q24": 4, "q25": "igen", "q26": 2},
+  {"gender": "lány", "age": 17, "location": "Kémes", "workshopDate": "2022.05.27-29.", "responseDate": "2025-06-25", "followUpDays": 1123, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 3, "q13": 3, "q14": 4, "q15": 4, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 5, "q23": 3, "q24": 4, "q25": "nem", "q26": 4},
+  {"gender": "lány", "age": 17, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-06-25", "followUpDays": 773, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 3, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 5, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 4, "q23": 4, "q24": 5, "q25": "nem", "q26": 3},
+  {"gender": "lány", "age": 16, "location": "Mágocs", "workshopDate": "2023.05.12-14.", "responseDate": "2025-12-15", "followUpDays": 946, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 3, "q12": 4, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 3, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 5, "q23": 3, "q24": 5, "q25": "igen", "q26": 4},
+  {"gender": "fiú", "age": 12, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2025-12-15", "followUpDays": 568, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 2, "q12": 2, "q13": 2, "q14": 3, "q15": 4, "q16": 5, "q17": 4, "q18": 4, "q19": 2, "q20": 2, "q21": 5, "q22": 5, "q23": 4, "q24": 1, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 15, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2025-12-17", "followUpDays": 570, "satisfaction": 4, "wouldReturn": "igen", "q9": 3, "q10": 2, "q11": 2, "q12": 3, "q13": 2, "q14": 3, "q15": 3, "q16": 4, "q17": 4, "q18": 3, "q19": 2, "q20": 2, "q21": 4, "q22": 2, "q23": 1, "q24": 1, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 15, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2025-12-17", "followUpDays": 570, "satisfaction": 5, "wouldReturn": "igen", "q9": 1, "q10": 1, "q11": 2, "q12": 2, "q13": 2, "q14": 2, "q15": 3, "q16": 3, "q17": 3, "q18": 3, "q19": 3, "q20": 2, "q21": 2, "q22": 2, "q23": 1, "q24": 1, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 12, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2025-12-17", "followUpDays": 570, "satisfaction": 4, "wouldReturn": "nem tudom", "q9": 3, "q10": 3, "q11": 2, "q12": 2, "q13": 2, "q14": 3, "q15": 4, "q16": 3, "q17": 4, "q18": 3, "q19": 2, "q20": 3, "q21": 4, "q22": 4, "q23": 3, "q24": 2, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 13, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2025-12-17", "followUpDays": 570, "satisfaction": 4, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 3, "q12": 3, "q13": 4, "q14": 3, "q15": 4, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 4, "q24": 4, "q25": "igen", "q26": 1},
+  {"gender": "fiú", "age": 12, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2025-12-18", "followUpDays": 571, "satisfaction": 4, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 4, "q12": 4, "q13": 3, "q14": 3, "q15": 4, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 2, "q21": 3, "q22": 3, "q23": 2, "q24": 2, "q25": "nem", "q26": 2},
+  {"gender": "lány", "age": 12, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2026-01-12", "followUpDays": 596, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 4, "q12": 4, "q13": 4, "q14": 3, "q15": 4, "q16": 3, "q17": 3, "q18": 4, "q19": 2, "q20": 2, "q21": 4, "q22": 4, "q23": 3, "q24": 4, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 12, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2026-01-14", "followUpDays": 598, "satisfaction": 4, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 3, "q13": 3, "q14": 2, "q15": 4, "q16": 3, "q17": 3, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 4, "q23": 2, "q24": 5, "q25": "igen", "q26": 3},
+  {"gender": "lány", "age": 13, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2026-01-15", "followUpDays": 599, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 3, "q12": 3, "q13": 4, "q14": 3, "q15": 4, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 3, "q24": 5, "q25": "igen", "q26": 3},
+  {"gender": "fiú", "age": 14, "location": "Pécs", "workshopDate": "2024.05.24-26.", "responseDate": "2026-02-05", "followUpDays": 620, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 3, "q12": 3, "q13": 4, "q14": 3, "q15": 3, "q16": 5, "q17": 4, "q18": 4, "q19": 2, "q20": 3, "q21": 2, "q22": 3, "q23": 2, "q24": 2, "q25": "nem", "q26": 1},
+  {"gender": "fiú", "age": 14, "location": "Gilvánfa", "workshopDate": "2024.11.15-17.", "responseDate": "2026-02-05", "followUpDays": 445, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 4, "q11": 5, "q12": 5, "q13": 4, "q14": 3, "q15": 5, "q16": 4, "q17": 5, "q18": 5, "q19": 4, "q20": 3, "q21": 5, "q22": 4, "q23": 5, "q24": 5, "q25": "igen", "q26": 3},
+  {"gender": "fiú", "age": 12, "location": "Gilvánfa", "workshopDate": "2024.11.15-17.", "responseDate": "2026-02-05", "followUpDays": 445, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 3, "q13": 4, "q14": 4, "q15": 5, "q16": 4, "q17": 5, "q18": 4, "q19": 3, "q20": 3, "q21": 5, "q22": 4, "q23": 4, "q24": 5, "q25": "igen", "q26": 5},
+  {"gender": "lány", "age": 12, "location": "Gilvánfa", "workshopDate": "2024.11.15-17.", "responseDate": "2026-02-05", "followUpDays": 445, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 4, "q11": 5, "q12": 4, "q13": 5, "q14": 5, "q15": 4, "q16": 5, "q17": 4, "q18": 5, "q19": 4, "q20": 3, "q21": 5, "q22": 4, "q23": 3, "q24": 4, "q25": "igen", "q26": 5},
+  {"gender": "lány", "age": 12, "location": "Gilvánfa", "workshopDate": "2024.11.15-17.", "responseDate": "2026-02-05", "followUpDays": 445, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 3, "q11": 4, "q12": 4, "q13": 5, "q14": 5, "q15": 5, "q16": 5, "q17": 5, "q18": 5, "q19": 5, "q20": 4, "q21": 4, "q22": 5, "q23": 5, "q24": 5, "q25": "igen", "q26": 5},
+  {"gender": "fiú", "age": 17, "location": "Gilvánfa", "workshopDate": "2024.11.15-17.", "responseDate": "2026-02-15", "followUpDays": 455, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 3, "q12": 4, "q13": 4, "q14": 3, "q15": 4, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 4, "q23": 3, "q24": 3, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 14, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-02-15", "followUpDays": 266, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 4, "q11": 4, "q12": 4, "q13": 5, "q14": 3, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 2, "q21": 5, "q22": 4, "q23": 3, "q24": 4, "q25": "nem", "q26": null},
+  {"gender": "lány", "age": 16, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-02-15", "followUpDays": 266, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 4, "q12": 4, "q13": 4, "q14": 3, "q15": 5, "q16": 5, "q17": 5, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 3, "q23": 4, "q24": 4, "q25": "nem", "q26": 2},
+  {"gender": "fiú", "age": 15, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-02-15", "followUpDays": 266, "satisfaction": 5, "wouldReturn": "nem tudom", "q9": 5, "q10": 4, "q11": 3, "q12": 3, "q13": 4, "q14": 4, "q15": 5, "q16": 5, "q17": 4, "q18": 3, "q19": 3, "q20": 4, "q21": 4, "q22": 3, "q23": 4, "q24": 3, "q25": "nem", "q26": 3},
+  {"gender": "fiú", "age": 19, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-03-12", "followUpDays": 291, "satisfaction": 4, "wouldReturn": "igen", "q9": 2, "q10": 2, "q11": 3, "q12": 4, "q13": 2, "q14": 3, "q15": 2, "q16": 3, "q17": 2, "q18": 3, "q19": 4, "q20": 3, "q21": 2, "q22": 1, "q23": 1, "q24": 1, "q25": "nem", "q26": 1},
+  {"gender": "lány", "age": 18, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-03-12", "followUpDays": 291, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 5, "q11": 5, "q12": 4, "q13": 5, "q14": 5, "q15": 5, "q16": 5, "q17": 4, "q18": 5, "q19": 5, "q20": 5, "q21": 5, "q22": 5, "q23": 5, "q24": 3, "q25": "igen", "q26": 4},
+  {"gender": "lány", "age": 18, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-03-12", "followUpDays": 291, "satisfaction": 5, "wouldReturn": "igen", "q9": 4, "q10": 3, "q11": 5, "q12": 3, "q13": 5, "q14": 5, "q15": 5, "q16": 5, "q17": 4, "q18": 4, "q19": 3, "q20": 5, "q21": 3, "q22": 2, "q23": 2, "q24": 2, "q25": "nem", "q26": 3},
+  {"gender": "lány", "age": 14, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-03-12", "followUpDays": 291, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 5, "q11": 5, "q12": 5, "q13": 5, "q14": 5, "q15": 5, "q16": 5, "q17": 5, "q18": 3, "q19": 5, "q20": 5, "q21": 5, "q22": 5, "q23": 5, "q24": 5, "q25": "igen", "q26": 5},
+  {"gender": "fiú", "age": 12, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-03-14", "followUpDays": 293, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 5, "q11": 5, "q12": 3, "q13": 5, "q14": 1, "q15": 3, "q16": 5, "q17": 4, "q18": 5, "q19": 5, "q20": 5, "q21": 5, "q22": 3, "q23": 4, "q24": 5, "q25": "igen", "q26": 4},
+  {"gender": "fiú", "age": 12, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-03-14", "followUpDays": 293, "satisfaction": 5, "wouldReturn": "igen", "q9": 5, "q10": 4, "q11": 3, "q12": 5, "q13": 4, "q14": 1, "q15": 5, "q16": 5, "q17": 3, "q18": 4, "q19": 3, "q20": 3, "q21": 4, "q22": 4, "q23": 5, "q24": 3, "q25": "igen", "q26": 4},
+  {"gender": "fiú", "age": 13, "location": "Somogyszentpál", "workshopDate": "2025.05.23-25.", "responseDate": "2026-03-14", "followUpDays": 293, "satisfaction": 5, "wouldReturn": "igen", "q9": 3, "q10": 5, "q11": 4, "q12": 4, "q13": 5, "q14": 4, "q15": 5, "q16": 5, "q17": 4, "q18": 3, "q19": 3, "q20": 4, "q21": 5, "q22": 5, "q23": 4, "q24": 3, "q25": "igen", "q26": 3},
 ];
 
-export const youthData: YouthRow[] = rawRows.map(r => ({
-  gender: r[0],
-  age: parseInt(r[1]),
-  location: r[2].split(" (")[0],
-  satisfaction: parseInt(r[3]),
-  wouldReturn: r[4],
-  q9: parseInt(r[5]), q10: parseInt(r[6]), q11: parseInt(r[7]),
-  q12: parseInt(r[8]), q13: parseInt(r[9]), q14: parseInt(r[10]),
-  q15: parseInt(r[11]), q16: parseInt(r[12]), q17: parseInt(r[13]),
-  q18: parseInt(r[14]), q19: parseInt(r[15]), q20: parseInt(r[16]),
-  q21: parseInt(r[17]), q22: parseInt(r[18]), q23: parseInt(r[19]),
-  q24: parseInt(r[20] === "igen" ? "0" : r[20] === "nem" ? "0" : r[20]),
-  q25: parseInt(r[21]),
-  q26: parseInt(r[22] || "0"),
-}));
+export const locations: string[] = ["Gilvánfa", "Istvándi", "Kémes", "Mágocs", "Pécs", "Somogyszentpál", "Sárosd"];
 
-// Question labels
 export const youthQuestionLabels: Record<string, string> = {
-  q9: "Magabiztosabb megszólalás",
-  q10: "Önbizalom növekedése",
-  q11: "Véleménynyilvánítás",
-  q12: "Segítségkérés",
-  q13: "Együttműködés",
-  q14: "Konfliktuskezelés",
-  q15: "Nyitottság új emberekre",
-  q16: "Közösségi programok",
-  q17: "Ismeretlenek megszólítása",
-  q18: "Elfogadás",
-  q19: "Közösségi szabályok",
-  q20: "Felelősségvállalás",
-  q21: "Szervezők hatása",
-  q22: "Jövőről gondolkodás",
-  q23: "Jövőkép alakítása",
-  q24: "Filmezés/média iránti érdeklődés",
-  q25: "Kreatív tartalom készítése",
+  "q9": "Magabiztosabb megszólalás",
+  "q10": "Önbizalom",
+  "q11": "Vélemény képviselete",
+  "q12": "Segítségkérés",
+  "q13": "Együttműködés",
+  "q14": "Nyugodt konfliktuskezelés",
+  "q15": "Nyitottság új emberekre",
+  "q16": "Közösségi programokon részvétel",
+  "q17": "Beszélgetés ismeretlenekkel",
+  "q18": "Elfogadás más háttér iránt",
+  "q19": "Közösségi szabályok betartása",
+  "q20": "Felelősségvállalás",
+  "q21": "Szervezők, segítők ösztönző hatása",
+  "q22": "Több gondolkodás a jövőről",
+  "q23": "Hatás a jövőkép alakulására",
+  "q24": "Érdeklődés a film/média iránt",
+  "q25": "Készített-e azóta videót/kreatív tartalmat (igen/nem)",
+  "q26": "Hatás a továbbtanulási döntésre"
 };
 
-export const locations = [...new Set(youthData.map(d => d.location))];
+export const youthQuestionFullText: Record<string, string> = {
+  "q9": "9.  A workshop óta magabiztosabban merek megszólalni mások előtt.",
+  "q10": "10.  Úgy érzem, jobban bízom magamban, mint korábban.",
+  "q11": "11.  Képes vagyok kiállni a saját véleményem mellett.",
+  "q12": "12.  Könnyebben kérek segítséget, ha szükségem van rá.",
+  "q13": "13.  Jobban tudok együttműködni másokkal.",
+  "q14": "14.  Konfliktushelyzetben nyugodtabban reagálok.",
+  "q15": "15.  Nyitottabb lettem az új emberekkel való találkozásra.",
+  "q16": "16.  Szívesebben veszek részt közösségi programokon.",
+  "q17": "17.  Könnyebben beszélgetek számomra ismeretlen emberekkel.",
+  "q18": "18.  Elfogadóbb lettem más háttérből érkező emberekkel szemben.",
+  "q19": "19.  Tudatosabban tartom be a közösségi szabályokat.",
+  "q20": "20.  Felelősségteljesebben állok a rám bízott feladatokhoz.",
+  "q21": "21. A szervezők és segítők személyisége ösztönzően hatott a viselkedésemre!",
+  "q22": "22.  A workshop hatására többet gondolkodom a jövőmről.",
+  "q23": "23.  A program hatással volt arra, hogyan képzelem el a saját jövőmet.",
+  "q24": "24.  A workshop hatására érdeklődni kezdtem a filmezés vagy média iránt.",
+  "q25": "25.  A workshop után készítettem még videót / kreatív tartalmat.",
+  "q26": "26.  A workshop hatással volt a továbbtanulási döntésemre.",
+  "satisfaction": "7.  Mennyire voltál elégedett a programmal?",
+  "wouldReturn": "8.  Ha újra lenne ilyen program, részt vennél rajta?"
+};
 
-// Skill categories for grouping
+export const youthFollowUp = { minDays: 117, maxDays: 1123, medianDays: 570 };
+
 export const skillCategories = {
-  confidence: { label: "Önbizalom és kommunikáció", keys: ["q9", "q10", "q11"] as const },
-  cooperation: { label: "Együttműködés és közösség", keys: ["q12", "q13", "q14"] as const },
-  community: { label: "Közösségi hatások", keys: ["q15", "q16", "q17", "q18", "q19", "q20"] as const },
-  longTerm: { label: "Hosszútávú hatások", keys: ["q21", "q22", "q23"] as const },
-  media: { label: "Filmkészítés és média", keys: ["q24", "q25"] as const },
+  confidence: { label: "Önbizalom és önkifejezés", keys: ["q9", "q10", "q11", "q12"] },
+  cooperation: { label: "Együttműködés és nyitottság", keys: ["q13", "q14", "q15", "q16"] },
+  community: { label: "Közösségi kapcsolódás", keys: ["q17", "q18", "q19", "q20"] },
+  future: { label: "Jövőkép és továbbtanulás", keys: ["q22", "q23", "q26"] },
 };
 
-export function getAvg(data: YouthRow[], key: keyof YouthRow): number {
-  const vals = data.map(d => d[key] as number).filter(v => !isNaN(v) && v > 0);
-  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-}
-
-export function getDistribution(data: YouthRow[], key: keyof YouthRow): { label: string; count: number; pct: number }[] {
-  const labels = [
-    "1 – egyáltalán nem",
-    "2 – inkább nem",
-    "3 – részben",
-    "4 – inkább igen",
-    "5 – teljes mértékben",
-  ];
-  const counts = [0, 0, 0, 0, 0];
-  const vals = data.map(d => d[key] as number).filter(v => !isNaN(v) && v >= 1 && v <= 5);
-  vals.forEach(v => counts[v - 1]++);
-  return labels.map((label, i) => ({
-    label,
-    count: counts[i],
-    pct: vals.length ? Math.round((counts[i] / vals.length) * 100) : 0,
-  }));
-}
+export type YouthKey = keyof YouthRow;
+export const getAvg = (data: readonly YouthRow[], key: YouthKey): number => avgOf(data as readonly Record<string, unknown>[], key as string);
+export const getValidN = (data: readonly YouthRow[], key: YouthKey): number => validN(data as readonly Record<string, unknown>[], key as string);
+export const getPositivePct = (data: readonly YouthRow[], key: YouthKey): number => positivePct(data as readonly Record<string, unknown>[], key as string);
+export const getDistribution = (data: readonly YouthRow[], key: YouthKey): DistBin[] => distributionOf(data as readonly Record<string, unknown>[], key as string);

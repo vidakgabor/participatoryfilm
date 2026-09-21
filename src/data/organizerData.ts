@@ -139,7 +139,7 @@ export const orgSkillCategories = {
 };
 
 export type OrganizerKey = keyof OrganizerRow;
-export const getOrgAvg = (data: readonly OrganizerRow[], key: OrganizerKey): number => avgOf(data as readonly Record<string, unknown>[], key as string);
-export const getOrgValidN = (data: readonly OrganizerRow[], key: OrganizerKey): number => validN(data as readonly Record<string, unknown>[], key as string);
-export const getOrgPositivePct = (data: readonly OrganizerRow[], key: OrganizerKey): number => positivePct(data as readonly Record<string, unknown>[], key as string);
-export const getOrgDistribution = (data: readonly OrganizerRow[], key: OrganizerKey): DistBin[] => distributionOf(data as readonly Record<string, unknown>[], key as string);
+export const getOrgAvg = (data: readonly OrganizerRow[], key: OrganizerKey): number => avgOf(data, key as string);
+export const getOrgValidN = (data: readonly OrganizerRow[], key: OrganizerKey): number => validN(data, key as string);
+export const getOrgPositivePct = (data: readonly OrganizerRow[], key: OrganizerKey): number => positivePct(data, key as string);
+export const getOrgDistribution = (data: readonly OrganizerRow[], key: OrganizerKey): DistBin[] => distributionOf(data, key as string);

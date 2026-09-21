@@ -157,7 +157,7 @@ export const skillCategories = {
 };
 
 export type YouthKey = keyof YouthRow;
-export const getAvg = (data: readonly YouthRow[], key: YouthKey): number => avgOf(data as readonly Record<string, unknown>[], key as string);
-export const getValidN = (data: readonly YouthRow[], key: YouthKey): number => validN(data as readonly Record<string, unknown>[], key as string);
-export const getPositivePct = (data: readonly YouthRow[], key: YouthKey): number => positivePct(data as readonly Record<string, unknown>[], key as string);
-export const getDistribution = (data: readonly YouthRow[], key: YouthKey): DistBin[] => distributionOf(data as readonly Record<string, unknown>[], key as string);
+export const getAvg = (data: readonly YouthRow[], key: YouthKey): number => avgOf(data, key as string);
+export const getValidN = (data: readonly YouthRow[], key: YouthKey): number => validN(data, key as string);
+export const getPositivePct = (data: readonly YouthRow[], key: YouthKey): number => positivePct(data, key as string);
+export const getDistribution = (data: readonly YouthRow[], key: YouthKey): DistBin[] => distributionOf(data, key as string);

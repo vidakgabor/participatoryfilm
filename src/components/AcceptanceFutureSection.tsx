@@ -2,22 +2,28 @@ import { useMemo } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  Cell, PieChart, Pie, Legend,
+  Cell, Legend,
 } from "recharts";
 import { MetricCard } from "./MetricCard";
 import { ChartCard } from "./ChartCard";
-import { youthData, youthQuestionLabels, getAvg, getDistribution, type YouthRow } from "@/data/youthData";
+import {
+  youthData, youthQuestionLabels, youthQuestionFullText,
+  getAvg, getValidN, getPositivePct, getDistribution, type YouthRow,
+} from "@/data/youthData";
+import { fmt, fmtPct } from "@/data/statsHelpers";
 
 interface AcceptanceFutureSectionProps {
   selectedLocation: string;
 }
 
 const BLUE = "#2563EB";
-const BLUE_LIGHT = "#93c5fd";
 const GREEN = "#16a34a";
 const AMBER = "#f59e0b";
 const ROSE = "#e11d48";
 const COLORS_5 = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#2563EB"];
+
+const acceptanceKeys: (keyof YouthRow)[] = ["q17", "q18", "q19"];
+const futureKeys: (keyof YouthRow)[] = ["q22", "q23", "q26"];
 
 export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSectionProps) {
   const data = useMemo(() => {
@@ -27,175 +33,116 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
 
   const n = data.length;
 
-  // ── Acceptance & Community Connection (q17, q18, q19) ──
-  const acceptanceKeys: (keyof YouthRow)[] = ["q17", "q18", "q19"];
-  const acceptanceLabels: Record<string, string> = {
-    q17: "Ismeretlenek megszólítása",
-    q18: "Elfogadás",
-    q19: "Közösségi szabályok betartása",
-  };
-
   const acceptanceAvgs = useMemo(() =>
     acceptanceKeys.map(k => ({
-      name: acceptanceLabels[k] || youthQuestionLabels[k],
+      name: youthQuestionLabels[k as string],
       avg: parseFloat(getAvg(data, k).toFixed(2)),
+      nValid: getValidN(data, k),
     })), [data]);
 
-  const acceptanceOverallAvg = useMemo(() => {
-    const sum = acceptanceKeys.reduce((s, k) => s + getAvg(data, k), 0);
-    return (sum / acceptanceKeys.length).toFixed(2);
-  }, [data]);
-
-  const acceptanceDists = useMemo(() =>
-    acceptanceKeys.map(k => ({
-      key: k,
-      label: acceptanceLabels[k] || youthQuestionLabels[k],
-      dist: getDistribution(data, k),
-    })), [data]);
-
-  // Stacked data for acceptance
   const acceptanceStacked = useMemo(() =>
-    acceptanceDists.map(({ label, dist }) => ({
-      name: label,
-      "Egyáltalán nem": dist[0].pct,
-      "Inkább nem": dist[1].pct,
-      "Részben": dist[2].pct,
-      "Inkább igen": dist[3].pct,
-      "Teljes mértékben": dist[4].pct,
-    })), [acceptanceDists]);
-
-  // ── Future Vision (q22, q23) ──
-  const futureKeys: (keyof YouthRow)[] = ["q22", "q23"];
-  const futureLabels: Record<string, string> = {
-    q22: "Jövőről gondolkodás",
-    q23: "Jövőkép alakítása",
-  };
+    acceptanceKeys.map(k => {
+      const dist = getDistribution(data, k);
+      return {
+        name: youthQuestionLabels[k as string],
+        "Egyáltalán nem": dist[0].pct,
+        "Inkább nem": dist[1].pct,
+        "Részben": dist[2].pct,
+        "Inkább igen": dist[3].pct,
+        "Teljes mértékben": dist[4].pct,
+      };
+    }), [data]);
 
   const futureAvgs = useMemo(() =>
     futureKeys.map(k => ({
-      name: futureLabels[k] || youthQuestionLabels[k],
+      name: youthQuestionLabels[k as string],
       avg: parseFloat(getAvg(data, k).toFixed(2)),
+      nValid: getValidN(data, k),
     })), [data]);
 
-  const futureOverallAvg = useMemo(() => {
-    const sum = futureKeys.reduce((s, k) => s + getAvg(data, k), 0);
-    return (sum / futureKeys.length).toFixed(2);
-  }, [data]);
-
-  const futureDists = useMemo(() =>
-    futureKeys.map(k => ({
-      key: k,
-      label: futureLabels[k] || youthQuestionLabels[k],
-      dist: getDistribution(data, k),
-    })), [data]);
-
-  // Combined radar for all 5 questions
   const radarData = useMemo(() =>
     [...acceptanceKeys, ...futureKeys].map(k => ({
-      skill: (acceptanceLabels[k] || futureLabels[k] || youthQuestionLabels[k]).substring(0, 18),
+      skill: youthQuestionLabels[k as string].split(" ").slice(0, 2).join(" "),
       value: parseFloat(getAvg(data, k).toFixed(2)),
       fullMark: 5,
     })), [data]);
 
-  // ── School completion / q26 ──
-  const schoolData = useMemo(() => {
-    const vals = data.map(d => d.q26).filter(v => !isNaN(v));
-    if (vals.length === 0) return null;
-    // q26 values: group into categories
-    const buckets: Record<string, number> = {
-      "0 – Nem releváns": 0,
-      "1 – Egyáltalán nem": 0,
-      "2 – Kicsit": 0,
-      "3 – Részben": 0,
-      "4 – Nagyrészt": 0,
-      "5 – Teljes mértékben": 0,
-    };
-    const labels = Object.keys(buckets);
-    vals.forEach(v => {
-      if (v >= 0 && v <= 5) buckets[labels[v]]++;
-    });
-    return labels.map(label => ({
-      name: label,
-      count: buckets[label],
-      pct: vals.length ? Math.round((buckets[label] / vals.length) * 100) : 0,
-    })).filter(d => d.count > 0);
-  }, [data]);
+  const q26Dist = useMemo(() => getDistribution(data, "q26"), [data]);
+  const q26N = getValidN(data, "q26");
+  const q26Positive = getPositivePct(data, "q26");
 
-  const schoolAvg = useMemo(() => {
-    const vals = data.map(d => d.q26).filter(v => !isNaN(v) && v > 0);
-    return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : "–";
-  }, [data]);
-
-  // ── Location breakdown for acceptance ──
   const locationBreakdown = useMemo(() => {
-    const locs = [...new Set(data.map(d => d.location))];
+    const locs = [...new Set(data.map(d => d.location))].sort();
     return locs.map(loc => {
       const locData = data.filter(d => d.location === loc);
       return {
-        name: loc,
-        "Elfogadás": parseFloat(getAvg(locData, "q18").toFixed(2)),
-        "Közösségi szabályok": parseFloat(getAvg(locData, "q19").toFixed(2)),
-        "Jövőkép": parseFloat(getAvg(locData, "q23").toFixed(2)),
+        name: `${loc} (n=${locData.length})`,
+        "Elfogadás (18.)": parseFloat(getAvg(locData, "q18").toFixed(2)),
+        "Jövőkép (23.)": parseFloat(getAvg(locData, "q23").toFixed(2)),
+        "Továbbtanulás (26.)": parseFloat(getAvg(locData, "q26").toFixed(2)),
       };
     });
   }, [data]);
 
-  // Positive response rates
-  const positiveRates = useMemo(() => {
-    const allKeys = [...acceptanceKeys, ...futureKeys];
-    return allKeys.map(k => {
-      const vals = data.map(d => d[k] as number).filter(v => !isNaN(v) && v >= 1 && v <= 5);
-      const positive = vals.filter(v => v >= 4).length;
-      return {
-        name: (acceptanceLabels[k] || futureLabels[k] || k),
-        pct: vals.length ? Math.round((positive / vals.length) * 100) : 0,
-      };
-    });
-  }, [data]);
+  const positiveRates = useMemo(() =>
+    [...acceptanceKeys, ...futureKeys].map(k => ({
+      name: youthQuestionLabels[k as string],
+      pct: parseFloat(getPositivePct(data, k).toFixed(1)),
+      nValid: getValidN(data, k),
+    })), [data]);
 
   return (
     <div data-pdf-section="acceptance-future">
       <div className="mb-6">
         <h2 className="text-lg font-display font-bold text-primary">Elfogadás, közösségi kapcsolódás és jövőkép</h2>
-        <p className="text-sm text-muted-foreground">Kérdőív 17–19. kérdés (elfogadás) és 22–23. kérdés (jövőkép) elemzése</p>
+        <p className="text-sm text-muted-foreground">
+          A fiatalok kérdőívének 17–19. (elfogadás, kapcsolódás) és 22–23., 26. (jövőkép, továbbtanulás) tételei — tételenkénti leíró elemzés
+        </p>
       </div>
 
-      {/* Summary metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <MetricCard label="Válaszadók" value={n} sublabel="N" />
-        <MetricCard label="Elfogadás átlag" value={acceptanceOverallAvg} sublabel="q17–q19 (1–5)" />
-        <MetricCard label="Jövőkép átlag" value={futureOverallAvg} sublabel="q22–q23 (1–5)" />
-        <MetricCard label="Iskola/tanulás" value={schoolAvg} sublabel="q26 átlag" />
+        <MetricCard label="Elfogadás (18.)" value={fmt(getAvg(data, "q18"))} sublabel={`átlag, n=${getValidN(data, "q18")}`} />
+        <MetricCard label="Jövőkép (23.)" value={fmt(getAvg(data, "q23"))} sublabel={`átlag, n=${getValidN(data, "q23")}`} />
+        <MetricCard label="Továbbtanulás (26.)" value={fmt(getAvg(data, "q26"))} sublabel={`átlag, n=${q26N}`} />
       </div>
 
-      {/* Row 1: Acceptance bars + Stacked Likert */}
+      <div className="chart-card mb-4">
+        <p className="text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">Megjegyzés: </span>
+          az egyes tételek külön-külön szerepelnek, összevont skálát nem képezünk, mert a kérdések nem validált skálaként készültek.
+          A 26. tétel pontos megfogalmazása: „{youthQuestionFullText.q26}” — ez nem az iskola befejezésére vonatkozik.
+          A hiányzó válasz kizárva (n = {q26N}).
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
-          title="Elfogadás és közösségi kapcsolódás — Átlagok"
+          title="Elfogadás és közösségi kapcsolódás — átlagok"
           id="acceptance-avgs"
-          insight={`Az elfogadás (${acceptanceAvgs.find(d => d.name === "Elfogadás")?.avg || "–"}/5) és a közösségi szabályok (${acceptanceAvgs.find(d => d.name.includes("szabály"))?.avg || "–"}/5) mutatják a legerősebb eredményt.`}
+          insight={`Az elfogadás más háttérből érkezők iránt ${fmt(getAvg(data, "q18"))}/5, az ismeretlenekkel való beszélgetés ${fmt(getAvg(data, "q17"))}/5, a közösségi szabályok betartása ${fmt(getAvg(data, "q19"))}/5.`}
         >
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={acceptanceAvgs} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={160} />
-              <Tooltip formatter={(val: number) => [val.toFixed(2), "Átlag"]} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={165} />
+              <Tooltip formatter={(val: number, _n, p) => [`${val.toFixed(2)} (n=${(p.payload as { nValid: number }).nValid})`, "Átlag"]} />
               <Bar dataKey="avg" fill={BLUE} radius={[0, 4, 4, 0]} barSize={22} animationDuration={600} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard
-          title="Elfogadás — Likert eloszlás (%)"
+          title="Elfogadás — válaszeloszlás (%)"
           id="acceptance-stacked"
-          insight="A válaszadók többsége pozitív (4–5) értékeket adott az elfogadás és közösségi kérdésekre."
+          insight={`A 18. tételnél a válaszadók ${fmtPct(getPositivePct(data, "q18"))}-a jelölt 4-es vagy 5-ös értéket; negatív (1–2) választ senki nem adott.`}
         >
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={acceptanceStacked} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} label={{ value: "%", position: "insideRight", fontSize: 10 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={140} />
+              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={150} />
               <Tooltip formatter={(val: number) => [`${val}%`]} />
               <Bar dataKey="Egyáltalán nem" stackId="a" fill={COLORS_5[0]} />
               <Bar dataKey="Inkább nem" stackId="a" fill={COLORS_5[1]} />
@@ -208,28 +155,19 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
         </ChartCard>
       </div>
 
-      {/* Row 2: Future vision + Radar */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
-          title="Jövőkép és továbbtanulási szándék"
+          title="Jövőkép és továbbtanulás — átlagok"
           id="future-avgs"
-          insight={`A program közepes mértékben befolyásolta a jövőről való gondolkodást (${futureAvgs[0]?.avg || "–"}/5) és a jövőkép alakítását (${futureAvgs[1]?.avg || "–"}/5).`}
+          insight={`A jövőről való gondolkodás ${fmt(getAvg(data, "q22"))}/5 és a jövőkép alakulása ${fmt(getAvg(data, "q23"))}/5 közepes értéket mutat, a továbbtanulási döntésre gyakorolt észlelt hatás ennél alacsonyabb (${fmt(getAvg(data, "q26"))}/5).`}
         >
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={futureDists.flatMap(({ label, dist }) =>
-              dist.map(d => ({ question: label, ...d }))
-            )}>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={futureAvgs} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="label" tick={{ fontSize: 8 }} angle={-20} textAnchor="end" height={70} />
-              <YAxis tick={{ fontSize: 10 }} label={{ value: "%", position: "insideLeft", fontSize: 10 }} />
-              <Tooltip formatter={(val: number) => [`${val}%`, "Arány"]} />
-              <Bar dataKey="pct" radius={[2, 2, 0, 0]} animationDuration={600}>
-                {futureDists.flatMap(({ dist }) =>
-                  dist.map((_, i) => (
-                    <Cell key={Math.random()} fill={COLORS_5[i]} />
-                  ))
-                )}
-              </Bar>
+              <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={165} />
+              <Tooltip formatter={(val: number, _n, p) => [`${val.toFixed(2)} (n=${(p.payload as { nValid: number }).nValid})`, "Átlag"]} />
+              <Bar dataKey="avg" fill={BLUE} radius={[0, 4, 4, 0]} barSize={22} animationDuration={600} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -237,7 +175,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
         <ChartCard
           title="Elfogadás és jövőkép — Radar"
           id="acceptance-future-radar"
-          insight="A radar diagram az összes elemzett dimenzió átlagértékét mutatja. Az elfogadás és a közösségi szabályok a legerősebbek."
+          insight="A radar a hat tétel átlagát mutatja egy skálán; az elfogadás és a kapcsolódás tételei magasabbak, a továbbtanulási tétel alacsonyabb."
         >
           <ResponsiveContainer width="100%" height={260}>
             <RadarChart data={radarData}>
@@ -250,19 +188,18 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
         </ChartCard>
       </div>
 
-      {/* Row 3: Positive rates + Location breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
-          title="Pozitív válaszok aránya (4–5 értékek)"
+          title="Pozitív (4–5) válaszok aránya tételenként"
           id="acceptance-positive"
-          insight="Az elfogadás kérdésnél a legmagasabb a pozitív válaszok aránya, míg a jövőkép alakítása mérsékeltebb."
+          insight={`A legmagasabb pozitív arány az elfogadás tételénél (${fmtPct(getPositivePct(data, "q18"))}), a legalacsonyabb a továbbtanulási döntésnél (${fmtPct(q26Positive)}).`}
         >
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={260}>
             <BarChart data={positiveRates} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} label={{ value: "%", position: "insideRight", fontSize: 10 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={160} />
-              <Tooltip formatter={(val: number) => [`${val}%`, "Pozitív"]} />
+              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={165} />
+              <Tooltip formatter={(val: number, _n, p) => [`${val}% (n=${(p.payload as { nValid: number }).nValid})`, "Pozitív (4–5)"]} />
               <Bar dataKey="pct" radius={[0, 4, 4, 0]} barSize={18} animationDuration={600}>
                 {positiveRates.map((d, i) => (
                   <Cell key={i} fill={d.pct >= 60 ? GREEN : d.pct >= 40 ? AMBER : ROSE} />
@@ -272,98 +209,46 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
           </ResponsiveContainer>
         </ChartCard>
 
-        {selectedLocation === "all" && locationBreakdown.length > 1 ? (
-          <ChartCard
-            title="Helyszínek közötti összehasonlítás"
-            id="acceptance-locations"
-            insight="A helyszínek közötti eltérések a közösségi kontextus és a program implementációjának különbségeit tükrözik."
-          >
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={locationBreakdown}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 8 }} angle={-20} textAnchor="end" height={60} />
-                <YAxis domain={[0, 5]} tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(val: number) => [val.toFixed(2), "Átlag"]} />
-                <Bar dataKey="Elfogadás" fill={BLUE} barSize={12} radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Közösségi szabályok" fill={GREEN} barSize={12} radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Jövőkép" fill={AMBER} barSize={12} radius={[2, 2, 0, 0]} />
-                <Legend wrapperStyle={{ fontSize: 9 }} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        ) : (
-          <ChartCard
-            title="Részletes eloszlás — Jövőkép alakítása (q23)"
-            id="future-q23-dist"
-            insight={`A q23 kérdésnél a válaszadók ${futureDists[1]?.dist[3]?.pct + futureDists[1]?.dist[4]?.pct || 0}%-a adott pozitív választ.`}
-          >
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={futureDists[1]?.dist || []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 10 }} label={{ value: "%", position: "insideLeft", fontSize: 10 }} />
-                <Tooltip formatter={(val: number) => [`${val}%`, "Arány"]} />
-                <Bar dataKey="pct" radius={[2, 2, 0, 0]} animationDuration={600}>
-                  {(futureDists[1]?.dist || []).map((_, i) => (
-                    <Cell key={i} fill={COLORS_5[i]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        )}
+        <ChartCard
+          title="26. kérdés — a továbbtanulási döntésre gyakorolt észlelt hatás"
+          id="future-q26-dist"
+          insight={`A válaszadók ${fmtPct(q26Positive)}-a (${q26Dist[3].count + q26Dist[4].count}/${q26N}) jelölt 4-es vagy 5-ös értéket, míg ${q26Dist[0].count}/${q26N} „egyáltalán nem” választ adott. Átlag: ${fmt(getAvg(data, "q26"))}/5.`}
+        >
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={q26Dist}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="label" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={70} />
+              <YAxis tick={{ fontSize: 10 }} label={{ value: "fő", position: "insideLeft", fontSize: 10 }} />
+              <Tooltip formatter={(val: number, _n, p) => [`${val} fő (${(p.payload as { pct: number }).pct}%)`, "Válaszok"]} />
+              <Bar dataKey="count" radius={[2, 2, 0, 0]} barSize={34} animationDuration={600}>
+                {q26Dist.map((_, i) => (
+                  <Cell key={i} fill={COLORS_5[i]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
 
-      {/* Row 4: School completion */}
-      {schoolData && schoolData.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <ChartCard
-            title="Iskola befejezése / továbbtanulás (q26)"
-            id="school-completion"
-            insight={`Az iskola befejezésére/továbbtanulásra vonatkozó átlagérték ${schoolAvg}/5. A program közvetett hatással bír a tanulási motivációra.`}
-          >
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={schoolData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(val: number, name: string) => [name === "pct" ? `${val}%` : val, name === "pct" ? "Arány" : "Fő"]} />
-                <Bar dataKey="count" fill={BLUE} radius={[2, 2, 0, 0]} barSize={30} animationDuration={600}>
-                  {schoolData.map((_, i) => (
-                    <Cell key={i} fill={COLORS_5[Math.min(i, 4)]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard
-            title="Iskola befejezése — Megoszlás (%)"
-            id="school-pie"
-            insight="A kördiagram az iskola befejezésére adott válaszok százalékos megoszlását mutatja."
-          >
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={schoolData}
-                  dataKey="pct"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={({ name, pct }) => `${pct}%`}
-                  animationDuration={600}
-                >
-                  {schoolData.map((_, i) => (
-                    <Cell key={i} fill={COLORS_5[Math.min(i, 4)]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(val: number) => [`${val}%`]} />
-                <Legend wrapperStyle={{ fontSize: 9 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
+      {selectedLocation === "all" && locationBreakdown.length > 1 && (
+        <ChartCard
+          title="Helyszínenkénti átlagok (kis elemszámok!)"
+          id="acceptance-locations"
+          insight="A helyszínenkénti elemszámok kicsik (n = 5–15), ezért az eltérések tájékoztató jellegűek, statisztikai következtetésre nem alkalmasak."
+        >
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={locationBreakdown}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 8 }} angle={-20} textAnchor="end" height={70} />
+              <YAxis domain={[0, 5]} tick={{ fontSize: 10 }} />
+              <Tooltip formatter={(val: number) => [val.toFixed(2), "Átlag"]} />
+              <Bar dataKey="Elfogadás (18.)" fill={BLUE} barSize={12} radius={[2, 2, 0, 0]} />
+              <Bar dataKey="Jövőkép (23.)" fill={GREEN} barSize={12} radius={[2, 2, 0, 0]} />
+              <Bar dataKey="Továbbtanulás (26.)" fill={AMBER} barSize={12} radius={[2, 2, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: 9 }} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       )}
     </div>
   );

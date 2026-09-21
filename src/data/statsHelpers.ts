@@ -1,19 +1,20 @@
 // Közös leíró statisztikai segédfüggvények (hiányzó értékek kizárásával)
 
 type Key = string;
-function vals<T extends Record<string, unknown>>(data: readonly T[], key: Key): number[] {
+export type Row = Record<string, unknown>;
+function vals(data: readonly object[], key: Key): number[] {
   return data
-    .map((d) => d[key as keyof T] as unknown)
+    .map((d) => (d as Row)[key])
     .filter((v): v is number => typeof v === "number" && v >= 1 && v <= 5);
 }
-export function validN<T extends Record<string, unknown>>(data: readonly T[], key: Key): number {
+export function validN(data: readonly object[], key: Key): number {
   return vals(data, key).length;
 }
-export function avgOf<T extends Record<string, unknown>>(data: readonly T[], key: Key): number {
+export function avgOf(data: readonly object[], key: Key): number {
   const v = vals(data, key);
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN;
 }
-export function positivePct<T extends Record<string, unknown>>(data: readonly T[], key: Key): number {
+export function positivePct(data: readonly object[], key: Key): number {
   const v = vals(data, key);
   return v.length ? (v.filter((x) => x >= 4).length / v.length) * 100 : NaN;
 }
@@ -25,7 +26,7 @@ export const LIKERT_LABELS = [
   "5 – Teljes mértékben",
 ];
 export interface DistBin { value: number; label: string; count: number; pct: number; }
-export function distributionOf<T extends Record<string, unknown>>(data: readonly T[], key: Key): DistBin[] {
+export function distributionOf(data: readonly object[], key: Key): DistBin[] {
   const v = vals(data, key);
   return LIKERT_LABELS.map((label, i) => {
     const count = v.filter((x) => x === i + 1).length;

@@ -22,6 +22,15 @@ const AMBER = "#f59e0b";
 const ROSE = "#e11d48";
 const COLORS_5 = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#2563EB"];
 
+const radarShort: Record<string, string> = {
+  q17: "Ismeretlenek",
+  q18: "Elfogadás",
+  q19: "Szabályok",
+  q22: "Jövő-gondolkodás",
+  q23: "Jövőkép",
+  q26: "Továbbtanulás",
+};
+
 const acceptanceKeys: (keyof YouthRow)[] = ["q17", "q18", "q19"];
 const futureKeys: (keyof YouthRow)[] = ["q22", "q23", "q26"];
 
@@ -62,7 +71,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
 
   const radarData = useMemo(() =>
     [...acceptanceKeys, ...futureKeys].map(k => ({
-      skill: youthQuestionLabels[k as string].split(" ").slice(0, 2).join(" "),
+      skill: radarShort[k as string],
       value: parseFloat(getAvg(data, k).toFixed(2)),
       fullMark: 5,
     })), [data]);
@@ -141,7 +150,7 @@ export function AcceptanceFutureSection({ selectedLocation }: AcceptanceFutureSe
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={acceptanceStacked} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
+              <XAxis type="number" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 10 }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={150} />
               <Tooltip formatter={(val: number) => [`${val}%`]} />
               <Bar dataKey="Egyáltalán nem" stackId="a" fill={COLORS_5[0]} />

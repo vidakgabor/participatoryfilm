@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend,
 } from "recharts";
 import { ChartCard } from "./ChartCard";
 import {
   youthWordFreq, organizerWordFreq,
-  youthThemes, organizerSkillThemes,
   youthWordAssociations, organizerWordAssociations,
+  youthChangeResponses, youthMemorableExperiences,
+  organizerTransformativeExperiences, organizerSkillDevelopment,
   getWordFrequencies,
 } from "@/data/openEndedData";
 
@@ -15,7 +16,8 @@ const ORG_COLOR = "#059669";
 const YOUTH_LIGHT = "#93c5fd";
 const ORG_LIGHT = "#6ee7b7";
 
-// CSS Word Cloud component
+const nonEmpty = (arr: string[]) => arr.filter(t => t && t.trim().length > 0).length;
+
 function WordCloud({ words, color, lightColor }: { words: { word: string; count: number }[]; color: string; lightColor: string }) {
   const maxCount = words[0]?.count || 1;
   const top30 = words.slice(0, 30);
@@ -49,11 +51,9 @@ function WordCloud({ words, color, lightColor }: { words: { word: string; count:
 }
 
 export function OpenEndedSection() {
-  // Top 15 words for bar charts
   const youthTopWords = useMemo(() => youthWordFreq.slice(0, 15), []);
   const orgTopWords = useMemo(() => organizerWordFreq.slice(0, 15), []);
 
-  // Combined word cloud comparison
   const combinedWords = useMemo(() => {
     const allYouth = getWordFrequencies(youthWordAssociations);
     const allOrg = getWordFrequencies(organizerWordAssociations);
@@ -65,47 +65,57 @@ export function OpenEndedSection() {
     })).sort((a, b) => (b.youth + b.organizer) - (a.youth + a.organizer)).slice(0, 12);
   }, []);
 
-  // Filter out "Nem észlelt változást" for the positive themes
-  const positiveYouthThemes = useMemo(() =>
-    youthThemes.filter(t => t.theme !== "Nem észlelt változást"),
-  []);
-  const noChangeRate = useMemo(() =>
-    youthThemes.find(t => t.theme === "Nem észlelt változást")?.pct || 0,
-  []);
+  const yAssocN = nonEmpty(youthWordAssociations);
+  const oAssocN = nonEmpty(organizerWordAssociations);
 
   return (
     <div data-pdf-section="openended">
       <div className="mb-6">
-        <h2 className="text-lg font-display font-bold text-primary">Nyitott kérdések elemzése</h2>
-        <p className="text-sm text-muted-foreground">Szöveges válaszok tematikus és szógyakorisági elemzése — mindkét csoport</p>
+        <h2 className="text-lg font-display font-bold text-primary">Nyitott kérdések — feltáró szövegelemzés</h2>
+        <p className="text-sm text-muted-foreground">
+          Automatikus kulcsszógyakoriság és szó szerinti idézetek mindkét csoport szabad szöveges válaszaiból
+        </p>
       </div>
 
-      {/* Word Clouds */}
+      <div className="chart-card mb-4">
+        <p className="text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">Módszertani megjegyzés: </span>
+          az alábbi ábrák <span className="font-semibold text-foreground">automatikus kulcsszó-előfordulást</span> mutatnak
+          (magyar stopszavak kiszűrésével és néhány egyszerű szóalak-összevonással), nem dokumentált, kódkönyv alapján végzett
+          kvalitatív tematikus elemzést. Az előfordulási számok tehát nem témák gyakoriságát, hanem szavak említésszámát jelentik,
+          és arányszámként vagy rangsorként nem értelmezhetők. A szöveges válaszok teljes állománya nem letölthető és nem kereshető
+          a dashboardon; csak összesített gyakoriságok és rövid, azonosításra nem alkalmas idézetek jelennek meg.
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          Válaszdarabszámok: fiatalok asszociációi n={yAssocN}, észlelt változás n={nonEmpty(youthChangeResponses)}, emlékezetes élmény n={nonEmpty(youthMemorableExperiences)};
+          hallgatók asszociációi n={oAssocN}, meghatározó élmény n={nonEmpty(organizerTransformativeExperiences)}, készségek n={nonEmpty(organizerSkillDevelopment)}.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
-          title="Szófelhő — Fiatalok asszociációi"
+          title="Szófelhő — Fiatalok asszociációi (6. kérdés)"
           id="youth-wordcloud"
-          insight={`A fiatalok leggyakrabban a „${youthWordFreq[0]?.word}" (${youthWordFreq[0]?.count}×), „${youthWordFreq[1]?.word}" (${youthWordFreq[1]?.count}×) és „${youthWordFreq[2]?.word}" (${youthWordFreq[2]?.count}×) szavakat említették a workshoppal kapcsolatban.`}
+          insight={`A leggyakrabban előforduló kifejezések: „${youthWordFreq[0]?.word}" (${youthWordFreq[0]?.count}×), „${youthWordFreq[1]?.word}" (${youthWordFreq[1]?.count}×), „${youthWordFreq[2]?.word}" (${youthWordFreq[2]?.count}×). Az adat szóelőfordulás, nem témagyakoriság.`}
         >
           <WordCloud words={youthWordFreq} color="#2563eb" lightColor="#60a5fa" />
         </ChartCard>
 
         <ChartCard
-          title="Szófelhő — Szervezők asszociációi"
+          title="Szófelhő — Hallgatók asszociációi (33. kérdés)"
           id="org-wordcloud"
           insightVariant="organizer"
-          insight={`A szervezők leggyakrabban a „${organizerWordFreq[0]?.word}" (${organizerWordFreq[0]?.count}×), „${organizerWordFreq[1]?.word}" (${organizerWordFreq[1]?.count}×) és „${organizerWordFreq[2]?.word}" (${organizerWordFreq[2]?.count}×) szavakat társították a programhoz.`}
+          insight={`A leggyakrabban előforduló kifejezések: „${organizerWordFreq[0]?.word}" (${organizerWordFreq[0]?.count}×), „${organizerWordFreq[1]?.word}" (${organizerWordFreq[1]?.count}×), „${organizerWordFreq[2]?.word}" (${organizerWordFreq[2]?.count}×). Az adat szóelőfordulás, nem témagyakoriság.`}
         >
           <WordCloud words={organizerWordFreq} color="#059669" lightColor="#34d399" />
         </ChartCard>
       </div>
 
-      {/* Word Frequency Bar Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <ChartCard
-          title="Top 15 szó — Fiatalok"
+          title="Leggyakoribb 15 kifejezés — Fiatalok"
           id="youth-word-freq"
-          insight="A fiatalok válaszaiban a szórakozás, barátság és a filmezéshez kapcsolódó szavak dominálnak — a program pozitív élményként rögzült."
+          insight="A lista a szavak nyers említésszámát mutatja a szabad szöveges válaszokban; az eredmény feltáró jellegű."
         >
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={youthTopWords} layout="vertical">
@@ -123,10 +133,10 @@ export function OpenEndedSection() {
         </ChartCard>
 
         <ChartCard
-          title="Top 15 szó — Szervezők"
+          title="Leggyakoribb 15 kifejezés — Hallgatók"
           id="org-word-freq"
           insightVariant="organizer"
-          insight="A szervezők asszociációiban a közösség, kreativitás és a gyerekek dominálnak — a szakmai élmény és a társadalmi hatás egyaránt megjelenik."
+          insight="A lista a szavak nyers említésszámát mutatja a szabad szöveges válaszokban; az eredmény feltáró jellegű."
         >
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={orgTopWords} layout="vertical">
@@ -144,90 +154,37 @@ export function OpenEndedSection() {
         </ChartCard>
       </div>
 
-      {/* Thematic Analysis */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <ChartCard
-          title="Tematikus elemzés — Fiatalok változásai (Q27)"
-          id="youth-themes"
-          insight={`A fiatalok ${100 - noChangeRate}%-a észlelt változást: a kommunikáció és a kapcsolatok erősödése a leggyakoribb téma. ${noChangeRate}% nem tudott konkrét változást megnevezni.`}
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={positiveYouthThemes} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis type="number" tick={{ fontSize: 10 }} label={{ value: "említések száma", position: "insideBottom", fontSize: 10, offset: -2 }} />
-              <YAxis type="category" dataKey="theme" tick={{ fontSize: 10, fontFamily: "'Source Sans Pro'" }} width={160} />
-              <Tooltip
-                formatter={(val: number, _name: string, props: any) => {
-                  const item = positiveYouthThemes[props.index];
-                  return [`${val} említés (${item?.pct}%)`, ""];
-                }}
-              />
-              <Bar dataKey="count" fill={YOUTH_COLOR} radius={[0, 3, 3, 0]} barSize={16} animationDuration={600}>
-                {positiveYouthThemes.map((_, i) => (
-                  <Cell key={i} fill={i < 3 ? YOUTH_COLOR : YOUTH_LIGHT} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard
-          title="Készségfejlődés témái — Szervezők (Q35)"
-          id="org-skill-themes"
-          insightVariant="organizer"
-          insight="A szervezők leginkább a kommunikáció, csoportvezetés és együttműködés terén észleltek fejlődést — ezek a facilitátori szerep kulcskompetenciái."
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={organizerSkillThemes} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis type="number" tick={{ fontSize: 10 }} label={{ value: "említések száma", position: "insideBottom", fontSize: 10, offset: -2 }} />
-              <YAxis type="category" dataKey="theme" tick={{ fontSize: 10, fontFamily: "'Source Sans Pro'" }} width={140} />
-              <Tooltip
-                formatter={(val: number, _name: string, props: any) => {
-                  const item = organizerSkillThemes[props.index];
-                  return [`${val} említés (${item?.pct}%)`, ""];
-                }}
-              />
-              <Bar dataKey="count" fill={ORG_COLOR} radius={[0, 3, 3, 0]} barSize={16} animationDuration={600}>
-                {organizerSkillThemes.map((_, i) => (
-                  <Cell key={i} fill={i < 3 ? ORG_COLOR : ORG_LIGHT} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
-
-      {/* Comparative word usage */}
       <ChartCard
-        title="Szóhasználat összehasonlítása — Fiatalok vs. Szervezők"
+        title="Szóhasználat egymás mellett — Fiatalok és hallgatók"
         id="word-comparison"
-        insight="A fiatalok a szórakozás és barátság szavakat használják leggyakrabban, míg a szervezők a közösség, kreativitás és a gyerekek szavakat — a két csoport eltérő perspektívából értékeli a programot."
+        insight="A két csoport eltérő kérdésre válaszolt, ezért az oszlopok egymás melletti leíró bemutatást szolgálnak, nem csoportkülönbséget mérnek."
       >
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={combinedWords}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="word" tick={{ fontSize: 9, fontFamily: "'Source Sans Pro'" }} angle={-25} textAnchor="end" height={70} />
-            <YAxis tick={{ fontSize: 10 }} label={{ value: "említések", position: "insideLeft", fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} label={{ value: "említés", position: "insideLeft", fontSize: 10 }} />
             <Tooltip />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
             <Bar dataKey="youth" name="Fiatalok" fill={YOUTH_COLOR} radius={[3, 3, 0, 0]} barSize={16} />
-            <Bar dataKey="organizer" name="Szervezők" fill={ORG_COLOR} radius={[3, 3, 0, 0]} barSize={16} />
+            <Bar dataKey="organizer" name="Hallgatók" fill={ORG_COLOR} radius={[3, 3, 0, 0]} barSize={16} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
 
-      {/* Notable quotes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div className="chart-card">
-          <h3 className="text-sm font-display font-semibold text-primary mb-3">Kiemelkedő válaszok — Fiatalok</h3>
+          <h3 className="text-sm font-display font-semibold text-primary mb-1">Illusztratív idézetek — Fiatalok</h3>
+          <p className="text-[10px] text-muted-foreground mb-3">
+            Szó szerinti, de illusztratív válogatás; nem reprezentatív mintája a válaszoknak.
+          </p>
           <div className="space-y-2">
             {[
-              "\u201EMagabiztosabb lettem m\u00E1sokkal val\u00F3 kommunik\u00E1ci\u00F3ban\u201D",
-              "\u201EBefogad\u00F3bb vagyok az idegenekkel szemben\u201D",
-              "\u201EV\u00E9gre tal\u00E1ltam egy hobbit amib\u0151l tal\u00E1n meg is tudok majd \u00E9lni\u201D",
-              "\u201ER\u00E1j\u00F6ttem hogy a filmez\u00E9s nagyon szuper dolog\u201D",
-              "\u201ENem f\u00E9lek ha idegen emberekkel tal\u00E1lkozok\u201D",
-              "\u201ENagyon nyitott szem\u00E9lyis\u00E9g vagyok \u00E9s tanuls\u00E1gos volt megismerni az ottani emberek \u00E9letfelfog\u00E1s\u00E1t\u201D",
+              "„Magabiztosabb lettem másokkal való kommunikációban”",
+              "„Befogadóbb vagyok az idegenekkel szemben”",
+              "„Végre találtam egy hobbit amiből talán meg is tudok majd élni”",
+              "„Rájöttem hogy a filmezés nagyon szuper dolog”",
+              "„Nem félek ha idegen emberekkel találkozok”",
             ].map((q, i) => (
               <p key={i} className="text-xs text-muted-foreground italic border-l-2 border-primary/30 pl-3 py-1">
                 {q}
@@ -237,15 +194,17 @@ export function OpenEndedSection() {
         </div>
 
         <div className="chart-card">
-          <h3 className="text-sm font-display font-semibold text-emerald-700 mb-3">Kiemelkedő válaszok — Szervezők</h3>
+          <h3 className="text-sm font-display font-semibold text-emerald-700 mb-1">Illusztratív idézetek — Hallgatók</h3>
+          <p className="text-[10px] text-muted-foreground mb-3">
+            Szó szerinti, de illusztratív válogatás; nem reprezentatív mintája a válaszoknak.
+          </p>
           <div className="space-y-2">
             {[
-              "\u201ESzem\u00E9lyes jelenl\u00E9t \u00E9s a k\u00F6z\u00F6s munka eg\u00E9szen m\u00E1s megismer\u00E9si lehet\u0151s\u00E9g, mint a m\u00E9di\u00E1b\u00F3l \u00E9rtes\u00FClni\u201D",
-              "\u201ER\u00E1j\u00F6ttem hogy mennyire m\u00E1sk\u00E9pp l\u00E1tj\u00E1k a vil\u00E1got, a vide\u00F3k elk\u00E9sz\u00EDt\u00E9s\u00E9vel ki tudt\u00E1k adni magukb\u00F3l az \u00E9rz\u00E9seiket\u201D",
-              "\u201ENem b\u00EDztam a pedag\u00F3giai k\u00E9szs\u00E9geimben, de alaptalan volt a f\u00E9lelmem\u201D",
-              "\u201ECsoportvezet\u0151 k\u00E9szs\u00E9g fejl\u0151d\u00F6tt, magabiztosabban \u00E1llok az ilyenhez\u201D",
-              "\u201EJ\u00F3 volt l\u00E1tni, hogy \u0151k is igaz\u00E1b\u00F3l ugyanolyanok, mint amilyen \u00E9n voltam ennyi id\u0151sen\u201D",
-              "\u201EVolt egy pont ahol meg\u00E9rtett\u00E9k, hogy mi miattuk j\u00F6tt\u00FCnk oda\u201D",
+              "„Személyes jelenlét és a közös munka egészen más megismerési lehetőség, mint a médiából értesülni”",
+              "„Nem bíztam a pedagógiai készségeimben, de alaptalan volt a félelmem”",
+              "„Csoportvezető készség fejlődött, magabiztosabban állok az ilyenhez”",
+              "„Jó volt látni, hogy ők is igazából ugyanolyanok, mint amilyen én voltam ennyi idősen”",
+              "„Volt egy pont ahol megértették, hogy mi miattuk jöttünk oda”",
             ].map((q, i) => (
               <p key={i} className="text-xs text-muted-foreground italic border-l-2 border-emerald-500/30 pl-3 py-1">
                 {q}

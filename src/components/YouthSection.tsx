@@ -104,9 +104,7 @@ export function YouthSection({ selectedLocation }: YouthSectionProps) {
       <div className="chart-card mb-4">
         <p className="text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">Módszertani megjegyzés: </span>
-          minden adat a résztvevők egyszeri, visszatekintő önbeszámolója a workshop után eltelt, egyénenként eltérő idővel.
-          Nincs előzetes (pre) mérés, ezért az értékek észlelt változást jelenítenek meg, nem mért változást, és nem értelmezhetők oksági hatásként.
-          Az átlagok a hiányzó válaszok kizárásával készültek (a tételenkénti n külön szerepel).
+          Az utánkövetés egyszeri, visszatekintő önbeszámolós adatfelvétel. A válaszok nem kapcsolhatók hitelesen személyenként a rövid távú bemeneti méréshez, ezért az utánkövetés nem alkot azzal ismételt mérési panelt. A változásra vonatkozó tételek utólag észlelt változást írnak le; nem bizonyítanak a bemenethez képest mért tartós változást vagy oksági programhatást. Az átlagok a hiányzó válaszok kizárásával készülnek, a tételenkénti érvényes elemszám feltüntetésével.
         </p>
       </div>
 

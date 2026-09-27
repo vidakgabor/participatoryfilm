@@ -21,7 +21,6 @@ const themes: { theme: string; youthKey: keyof YouthRow; orgKey: keyof Organizer
   { theme: "Magabiztosság / csoportvezetés", youthKey: "q10", orgKey: "q24" },
   { theme: "Nyitottság", youthKey: "q15", orgKey: "q21" },
   { theme: "Konfliktuskezelés", youthKey: "q14", orgKey: "q25" },
-  { theme: "Önismeret, reflexió", youthKey: "q22", orgKey: "q27" },
 ];
 
 export function ComparisonSection({ selectedLocation }: ComparisonSectionProps) {

@@ -12,5 +12,10 @@
 - [x] `src/lib/mannWhitney.ts` törölve; típusellenőrzés és böngészős ellenőrzés lefutott
 - [x] Ellenőrző értékek egyeznek (elégedettség 4,87; Q21 4,37 / 89,7%; Q26 2,83 n=77; szervezői Q15 2,24; Q32 4,07)
 
+## Hivatkozási funkció
+- [x] Másolható APA 7 hivatkozási panel, háttérszöveg és rövid távú eredménylink
+- [x] Tudományos HTML-metaadatok pontosítása
+- [x] Mobilnézet és pontos vágólapmásolás ellenőrizve; az export mind az öt szekciót tartalmazza (40 oldal)
+
 ## Nyitott
 - (nincs)

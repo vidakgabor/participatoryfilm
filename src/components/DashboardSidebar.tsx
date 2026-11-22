@@ -1,5 +1,6 @@
-import { Film, Users, BarChart3, GitCompare, MessageSquareText, HeartHandshake, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Film, Users, BarChart3, GitCompare, MessageSquareText, HeartHandshake, PanelLeftClose, PanelLeft, BookOpen } from "lucide-react";
 import { PdfExportButton } from "./PdfExportButton";
+import { Button } from "@/components/ui/button";
 
 interface DashboardSidebarProps {
   activeSection: string;
@@ -9,6 +10,7 @@ interface DashboardSidebarProps {
   locations: string[];
   isOpen: boolean;
   onToggle: () => void;
+  onCitationOpen: () => void;
   onBeforeExport?: () => Promise<void>;
   onAfterExport?: () => void;
 }
@@ -29,6 +31,7 @@ export function DashboardSidebar({
   locations,
   isOpen,
   onToggle,
+  onCitationOpen,
   onBeforeExport,
   onAfterExport,
 }: DashboardSidebarProps) {
@@ -99,6 +102,17 @@ export function DashboardSidebar({
               <option key={loc} value={loc}>{loc}</option>
             ))}
           </select>
+        </div>
+
+        <div className="px-5 pb-4">
+          <Button
+            variant="ghost"
+            onClick={onCitationOpen}
+            className="h-auto w-full justify-start whitespace-normal px-0 py-2 text-left text-xs text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <BookOpen className="shrink-0" />
+            Hivatkozás a kutatásra
+          </Button>
         </div>
 
         <div className="px-5 pb-4">

@@ -7,6 +7,7 @@ import { OpenEndedSection } from "@/components/OpenEndedSection";
 import { AcceptanceFutureSection } from "@/components/AcceptanceFutureSection";
 import { locations } from "@/data/youthData";
 import { orgLocations } from "@/data/organizerData";
+import { ResearchCitationDialog } from "@/components/ResearchCitationDialog";
 
 const allLocations = [...new Set([...locations, ...orgLocations])].sort();
 
@@ -15,6 +16,7 @@ const Index = () => {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [exportMode, setExportMode] = useState(false);
+  const [citationOpen, setCitationOpen] = useState(false);
 
   const onBeforeExport = useCallback(async () => {
     setExportMode(true);
@@ -35,6 +37,7 @@ const Index = () => {
         locations={allLocations}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(false)}
+        onCitationOpen={() => setCitationOpen(true)}
         onBeforeExport={onBeforeExport}
         onAfterExport={onAfterExport}
       />
@@ -58,6 +61,7 @@ const Index = () => {
           <AcceptanceFutureSection selectedLocation={selectedLocation} />
         </div>
       </main>
+      <ResearchCitationDialog open={citationOpen} onOpenChange={setCitationOpen} />
     </div>
   );
 };
